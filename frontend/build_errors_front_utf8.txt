@@ -1,0 +1,365 @@
+﻿
+> royalbackend@0.1.0 build
+> next build
+
+npm : ΓÜá Warning: Next.js 
+inferred your workspace 
+root, but it may not be 
+correct.
+At line:1 char:1
++ npm run build > 
+build_errors_front.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (ΓÜá  
+   Warning: Ne...not be    
+ correct.:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+ We detected multiple 
+lockfiles and selected the 
+directory of C:\Users\Admin
+\package-lock.json as the 
+root directory.
+ To silence this warning, 
+set `turbopack.root` in 
+your Next.js config, or 
+consider removing one of 
+the lockfiles if it's not 
+needed.
+   See https://nextjs.org/d
+ocs/app/api-reference/confi
+g/next-config-js/turbopack#
+root-directory for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\Admin\Desktop
+\royalbackend\frontend\pack
+age-lock.json
+
+Γû▓ Next.js 16.2.1 (Turbopack)
+- Environments: .env.production
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build 
+failed with 4 errors:
+./Desktop/royalbackend/fron
+tend/src/app/admin/audit/pa
+ge.tsx:16:1
+Export AuditAction doesn't 
+exist in target module
+  [90m14 |[0m } 
+[36mfrom[0m [32m'@/compo
+nents/admin/common'[0m;
+  [90m15 |[0m 
+[36mimport[0m { 
+apiService } [36mfrom[0m 
+[32m'@/lib/api/api-service
+'[0m;
+[31m[1m>[0m [90m16 
+|[0m [36mimport[0m { 
+[33mAuditLog[0m, 
+[33mAuditAction[0m, 
+[33mPaginatedResponse[0m 
+} [36mfrom[0m 
+[32m'@/types'[0m;
+  [90m   |[0m [31m[1m^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^[0m
+  [90m17 |[0m
+  [90m18 |[0m 
+[36mexport[0m 
+[36mdefault[0m 
+[36mfunction[0m 
+[33mAuditLogsPage[0m() {
+  [90m19 |[0m   
+[36mconst[0m [logs, 
+setLogs] = useState<[33mPa
+ginatedResponse[0m<[33mAu
+ditLog[0m> | [36mnull[0m
+>([36mnull[0m);
+
+The export AuditAction was 
+not found in module [projec
+t]/Desktop/royalbackend/fro
+ntend/src/types/index.ts 
+[app-client] (ecmascript).
+Did you mean to import 
+RoundStatus?
+All exports of the module 
+are statically known (It 
+doesn't have dynamic 
+exports). So it's known 
+statically that the 
+requested export doesn't 
+exist.
+
+Import traces:
+  Client Component Browser:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Client 
+Component Browser]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Client 
+Component SSR]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Server 
+Component]
+
+
+./Desktop/royalbackend/fron
+tend/src/app/admin/audit/pa
+ge.tsx:16:1
+Export AuditAction doesn't 
+exist in target module
+  [90m14 |[0m } 
+[36mfrom[0m [32m'@/compo
+nents/admin/common'[0m;
+  [90m15 |[0m 
+[36mimport[0m { 
+apiService } [36mfrom[0m 
+[32m'@/lib/api/api-service
+'[0m;
+[31m[1m>[0m [90m16 
+|[0m [36mimport[0m { 
+[33mAuditLog[0m, 
+[33mAuditAction[0m, 
+[33mPaginatedResponse[0m 
+} [36mfrom[0m 
+[32m'@/types'[0m;
+  [90m   |[0m [31m[1m^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^[0m
+  [90m17 |[0m
+  [90m18 |[0m 
+[36mexport[0m 
+[36mdefault[0m 
+[36mfunction[0m 
+[33mAuditLogsPage[0m() {
+  [90m19 |[0m   
+[36mconst[0m [logs, 
+setLogs] = useState<[33mPa
+ginatedResponse[0m<[33mAu
+ditLog[0m> | [36mnull[0m
+>([36mnull[0m);
+
+The export AuditAction was 
+not found in module [projec
+t]/Desktop/royalbackend/fro
+ntend/src/types/index.ts 
+[app-ssr] (ecmascript).
+Did you mean to import 
+RoundStatus?
+All exports of the module 
+are statically known (It 
+doesn't have dynamic 
+exports). So it's known 
+statically that the 
+requested export doesn't 
+exist.
+
+Import traces:
+  Client Component Browser:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Client 
+Component Browser]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Client 
+Component SSR]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/audi
+t/page.tsx [Server 
+Component]
+
+
+./Desktop/royalbackend/fron
+tend/src/app/admin/bets/pag
+e.tsx:17:1
+Export BetMode doesn't 
+exist in target module
+  [90m15 |[0m } 
+[36mfrom[0m [32m'@/compo
+nents/admin/common'[0m;
+  [90m16 |[0m 
+[36mimport[0m { 
+apiService } [36mfrom[0m 
+[32m'@/lib/api/api-service
+'[0m;
+[31m[1m>[0m [90m17 
+|[0m [36mimport[0m { 
+[33mBet[0m, 
+[33mBetMode[0m, 
+[33mBetStatus[0m, 
+[33mPaginatedResponse[0m 
+} [36mfrom[0m 
+[32m'@/types'[0m;
+  [90m   |[0m [31m[1m^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^[0m
+  [90m18 |[0m
+  [90m19 |[0m 
+[36mexport[0m 
+[36mdefault[0m 
+[36mfunction[0m 
+[33mBetsPage[0m() {
+  [90m20 |[0m   
+[36mconst[0m [bets, 
+setBets] = useState<[33mPa
+ginatedResponse[0m<[33mBe
+t[0m> | [36mnull[0m>([3
+6mnull[0m);
+
+The export BetMode was not 
+found in module [project]/D
+esktop/royalbackend/fronten
+d/src/types/index.ts 
+[app-client] (ecmascript).
+Did you mean to import 
+BetType?
+All exports of the module 
+are statically known (It 
+doesn't have dynamic 
+exports). So it's known 
+statically that the 
+requested export doesn't 
+exist.
+
+Import traces:
+  Client Component Browser:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Client 
+Component Browser]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Client 
+Component SSR]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Server 
+Component]
+
+
+./Desktop/royalbackend/fron
+tend/src/app/admin/bets/pag
+e.tsx:17:1
+Export BetMode doesn't 
+exist in target module
+  [90m15 |[0m } 
+[36mfrom[0m [32m'@/compo
+nents/admin/common'[0m;
+  [90m16 |[0m 
+[36mimport[0m { 
+apiService } [36mfrom[0m 
+[32m'@/lib/api/api-service
+'[0m;
+[31m[1m>[0m [90m17 
+|[0m [36mimport[0m { 
+[33mBet[0m, 
+[33mBetMode[0m, 
+[33mBetStatus[0m, 
+[33mPaginatedResponse[0m 
+} [36mfrom[0m 
+[32m'@/types'[0m;
+  [90m   |[0m [31m[1m^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^[0m
+  [90m18 |[0m
+  [90m19 |[0m 
+[36mexport[0m 
+[36mdefault[0m 
+[36mfunction[0m 
+[33mBetsPage[0m() {
+  [90m20 |[0m   
+[36mconst[0m [bets, 
+setBets] = useState<[33mPa
+ginatedResponse[0m<[33mBe
+t[0m> | [36mnull[0m>([3
+6mnull[0m);
+
+The export BetMode was not 
+found in module [project]/D
+esktop/royalbackend/fronten
+d/src/types/index.ts 
+[app-ssr] (ecmascript).
+Did you mean to import 
+BetType?
+All exports of the module 
+are statically known (It 
+doesn't have dynamic 
+exports). So it's known 
+statically that the 
+requested export doesn't 
+exist.
+
+Import traces:
+  Client Component Browser:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Client 
+Component Browser]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Client 
+Component SSR]
+    ./Desktop/royalbackend/
+frontend/src/app/admin/bets
+/page.tsx [Server 
+Component]
+
+
+    at <unknown> (./Desktop
+/royalbackend/frontend/src/
+app/admin/audit/page.tsx:16
+:1)
+    at <unknown> (./Desktop
+/royalbackend/frontend/src/
+app/admin/audit/page.tsx:16
+:1)
+    at <unknown> (./Desktop
+/royalbackend/frontend/src/
+app/admin/bets/page.tsx:17:
+1)
+    at <unknown> (./Desktop
+/royalbackend/frontend/src/
+app/admin/bets/page.tsx:17:
+1)

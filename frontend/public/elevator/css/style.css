@@ -1,0 +1,121 @@
+/* Custom Scrollbar for Webkit */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Elevator Door Animation Classes */
+.doors-open #door-left {
+    transform: translateX(-90%);
+}
+
+.doors-open #door-right {
+    transform: translateX(90%);
+}
+
+/* Floor Indicator (Large Side Buttons) */
+.floor-indicator-large {
+    width: 60px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.floor-indicator-active {
+    background: rgba(250, 204, 21, 0.2);
+    /* Gold tint */
+    border-color: #FACC15;
+    color: #FACC15;
+    text-shadow: 0 0 15px #FACC15;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.4), inset 0 0 10px rgba(250, 204, 21, 0.2);
+    transform: scale(1.1);
+    z-index: 20;
+}
+
+.floor-indicator-win {
+    background: rgba(34, 197, 94, 0.4) !important;
+    border-color: #22c55e !important;
+    color: #22c55e !important;
+    text-shadow: 0 0 15px #22c55e;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), inset 0 0 10px rgba(34, 197, 94, 0.2) !important;
+    transform: scale(1.2);
+}
+
+.floor-indicator-loss {
+    background: rgba(239, 68, 68, 0.4) !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+    transform: scale(1.1);
+}
+
+.floor-indicator-pass {
+    background: rgba(100, 116, 139, 0.3) !important;
+    /* Slate/Gray */
+    border-color: #94a3b8 !important;
+    color: #94a3b8 !important;
+    transform: scale(0.95);
+    opacity: 0.7;
+}
+
+/* Toast Animation */
+@keyframes slide-up-fade {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    10% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    90% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+}
+
+.win-toast {
+    animation: slide-up-fade 4s forwards;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

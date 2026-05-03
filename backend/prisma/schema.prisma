@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table
+model User {
+  id             String    @id @default(cuid())
+  mobile         String    @unique
+  email          String?   @unique
+  username       String?   @unique
+  passwordHash   String
+  role           UserRole  @default(PLAYER)
+  
+  // Money fields changed to Decimal for precision
+  balance        Decimal   @default(0) @db.Decimal(18, 2)
+  totalBets      Int       @default(0)
+  totalWon       Decimal   @default(0) @db.Decimal(18, 2)
+  totalDeposit   Decimal   @default(0) @db.Decimal(18, 2)
+  totalWithdraw  Decimal   @default(0) @db.Decimal(18, 2)
+  
+  // Optimistic Concurrency Control
+  version        Int       @default(0)
+  
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  bets           Bet[]
+  sessions       UserSession[]
+  transactions   Transaction[]
+  auditLogs      AuditLog[]
+  
+  @@index([mobile])
+  @@index([role])
+  @@index([isActive])
+}
+
+// User sessions
+model UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// Game rounds
+model GameRound {
+  id            String        @id @default(cuid())
+  roundNumber   Int           @unique
+  openingResult Int[]         // The numbers that opened
+  openingType   OpeningType
+  
+  totalStake    Decimal       @db.Decimal(18, 2)
+  totalPayout   Decimal       @db.Decimal(18, 2)
+  houseProfit   Decimal       @db.Decimal(18, 2)
+  
+  version       Int           @default(0)
+  
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+  status        RoundStatus   @default(PENDING)
+  
+  bets          Bet[]
+  
+  @@index([roundNumber])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Bets table
+model Bet {
+  id               String     @id @default(cuid())
+  userId           String
+  roundId          String
+  betType          BetType
+  numbers          Int[]
+  amount           Decimal    @db.Decimal(18, 2)
+  status           BetStatus  @default(ACTIVE)
+  settlementAmount Decimal?   @db.Decimal(18, 2)
+  payoutMultiplier Int?
+  createdAt        DateTime   @default(now()) @map("timestamp")
+  updatedAt        DateTime   @updatedAt @default(now())
+  
+  user             User       @relation(fields: [userId], references: [id])
+  round            GameRound  @relation(fields: [roundId], references: [id])
+  
+  @@index([userId, createdAt])
+  @@index([roundId, status])
+  @@index([betType, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Bet stats (aggregated every 5 seconds)
+model BetStats {
+  id                String   @id @default(cuid())
+  timestamp         DateTime @default(now()) @db.Timestamptz
+  roundId           String?
+  singlesData       Json     // { "1": 5000, "2": 3000, ... }
+  pairsData         Json     // { "1,2": 10000, ... }
+  triplesData       Json     // { "1,2,3": 5000, ... }
+  quadsData         Json     // { "1,2,3,4": 20000, ... }
+  totalStake        Decimal  @db.Decimal(18, 2)
+  totalBets         Int
+  uniqueUsers       Int
+  calculationTimeMs Int
+  
+  @@index([timestamp(sort: Desc)])
+  @@index([roundId])
+}
+
+// Opening history
+model OpeningHistory {
+  id          String      @id @default(cuid())
+  opening     Int[]
+  openingType OpeningType
+  timestamp   DateTime    @default(now()) @db.Timestamptz
+  profit      Decimal     @db.Decimal(18, 2)
+  totalStake  Decimal     @db.Decimal(18, 2)
+  roundId     String
+  
+  @@index([timestamp(sort: Desc)])
+  @@index([roundId])
+}
+
+// Transactions
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(18, 2)
+  balanceBefore Decimal         @db.Decimal(18, 2)
+  balanceAfter  Decimal         @db.Decimal(18, 2)
+  status        TransactionStatus @default(PENDING)
+  reference     String?         // Bet ID or Deposit ID
+  description   String?
+  metadata      Json?           // Extra debug data (IP, Device, etc)
+  createdAt     DateTime        @default(now())
+  settledAt     DateTime?
+  updatedAt     DateTime        @updatedAt @default(now())
+  
+  user          User            @relation(fields: [userId], references: [id])
+  
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([type])
+  @@index([reference])
+}
+
+// Enums
+enum UserRole {
+  PLAYER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BetType {
+  SINGLE
+  PAIR
+  TRIPLE
+  QUAD
+}
+
+enum BetStatus {
+  ACTIVE
+  SETTLED
+  CANCELLED
+}
+
+enum RoundStatus {
+  PENDING
+  ACTIVE
+  SETTLED
+  CANCELLED
+}
+
+enum OpeningType {
+  SINGLE
+  PAIR
+  TRIPLE
+  QUAD
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  BET_PLACED
+  BET_WON
+  BET_LOST
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  WAITING_APPROVAL
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Admin Settings
+model AdminSettings {
+  id              String   @id @default("default-settings")
+  roundDuration   Int      @default(60)
+  minBetAmount    Decimal  @default(10) @db.Decimal(18, 2)
+  maxBetAmount    Decimal  @default(100000) @db.Decimal(18, 2)
+  maintenanceMode Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
+// Audit Logs
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  targetType String?  // e.g. "USER", "BET", "SETTING"
+  targetId   String?  // The ID of the thing changed
+  details    String?  // JSON string or summary
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId, createdAt])
+  @@index([action])
+  @@index([targetId])
+}

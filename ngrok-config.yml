@@ -1,0 +1,14 @@
+# ngrok-config.yml
+authtoken: 2jaev0qlBQDx2j70xC7aySYo12M_4fLkqDUjYsw6hyKCktBY4
+version: "2"
+tunnels:
+  royal-web:
+    proto: http
+    addr: 3000
+    schemes:
+      - https
+  royal-api:
+    proto: http
+    addr: 4000
+    schemes:
+      - https

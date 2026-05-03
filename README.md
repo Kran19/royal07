@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RoyalBet
 
-## Getting Started
+RoyalBet is a Docker-first betting platform with:
 
-First, run the development server:
+- a NestJS backend on port `4000`
+- a Next.js frontend on port `3000`
+- PostgreSQL for persistence
+- Redis for cache and websocket support
+- an ngrok sharing flow for client demos
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Current entry points
+
+- User app: `http://127.0.0.1:3000/user`
+- Admin login: `http://127.0.0.1:3000/admin/login`
+- Backend health: `http://127.0.0.1:4000/health`
+
+The frontend root `/` redirects to `/user`.
+
+## Recommended way to run
+
+### Local Docker stack
+
+```powershell
+docker compose --env-file .env.live -f docker-compose.live.yml up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### One-command local + ngrok share flow
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\go-live.ps1
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+That script:
 
-## Learn More
+1. starts Docker if needed
+2. starts ngrok
+3. refreshes `.env.live`
+4. rebuilds the live Docker stack
+5. waits for backend and frontend readiness
+6. ensures the admin account exists
 
-To learn more about Next.js, take a look at the following resources:
+## Admin test credentials
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Mobile: `9998887766`
+- Password: `admin123`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## What was fixed
 
-## Deploy on Vercel
+- backend startup blocker in the opening module
+- missing backend `/health` endpoint
+- wrong backend production start path
+- frontend/backend route mismatches
+- inaccurate admin online/offline check
+- local-vs-Docker backend rewrite mismatch in Next.js
+- frontend Docker healthcheck false negatives
+- gameplay result fallback bug when there were no bets
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Full operational and architecture notes are in [PROJECT_RUNBOOK.md](/c:/Users/Admin/Desktop/royalbackend/PROJECT_RUNBOOK.md).

@@ -1,0 +1,4 @@
+﻿src/modules/auth/auth.module.ts(14,22): error TS2322: Type 'string' is not assignable to type 'number | StringValue | undefined'.
+src/modules/auth/strategies/jwt.strategy.ts(5,31): error TS2307: Cannot find module '../../prisma/prisma.service' or its corresponding type declarations.
+src/modules/game/game.service.ts(30,7): error TS2322: Type '{ id: string; createdAt: Date; userId: string; betType: BetType; numbers: number[]; amount: number; status: BetStatus; settlementAmount: number | null; payoutMultiplier: number | null; roundId: string; }[]' is not assignable to type 'never[]'.
+  Type '{ id: string; createdAt: Date; userId: string; betType: BetType; numbers: number[]; amount: number; status: BetStatus; settlementAmount: number | null; payoutMultiplier: number | null; roundId: string; }' is not assignable to type 'never'.
