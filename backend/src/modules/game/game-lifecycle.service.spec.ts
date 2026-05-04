@@ -29,6 +29,10 @@ describe('GameLifecycleService', () => {
     broadcastToUser: jest.fn(),
   };
 
+  const settingsService = {
+    getSettings: jest.fn().mockResolvedValue({ roundDuration: 60 }),
+  };
+
   let service: GameLifecycleService;
 
   beforeEach(() => {
@@ -37,6 +41,7 @@ describe('GameLifecycleService', () => {
       prisma as any,
       profitCalculator as any,
       websocketGateway as any,
+      settingsService as any,
     );
     service.currentRoundId = 'round-1';
   });

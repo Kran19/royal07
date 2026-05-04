@@ -69,3 +69,14 @@ node_modules/.prisma
 # Temporary files
 tmp/
 temp/
+
+# Deployment & Local Scripts
+go-live.ps1
+go-local.ps1
+urls.txt
+live_urls.txt
+ngrok-config.yml
+.env.live
+docker-compose.live.yml
+docker-compose.local.yml
+archive/

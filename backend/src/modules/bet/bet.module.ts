@@ -4,6 +4,7 @@ import { BetService } from './bet.service';
 import { BetGateway } from './bet.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { GameModule } from '../game/game.module';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { GameModule } from '../game/game.module';
       secret: process.env.JWT_SECRET || 'super-secret-key-royalbet!'
     }),
     GameModule,
+    SettingsModule,
   ],
   controllers: [BetController],
   providers: [BetService, BetGateway],

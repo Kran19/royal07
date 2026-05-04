@@ -2,31 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import {
-  DataTable,
+  TabulatorTable,
   DetailDrawer,
   Badge,
-  Pagination,
   PageHeader,
   SectionCard,
 } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
-import { GameRound, RoundStatus, PaginatedResponse, Bet } from '@/types';
+import { GameRound, RoundStatus, Bet } from '@/types';
 
 export default function RoundsPage() {
-  const [rounds, setRounds] = useState<PaginatedResponse<GameRound> | null>(null);
+  const [rounds, setRounds] = useState<GameRound[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRound, setSelectedRound] = useState<GameRound | null>(null);
   const [roundBets, setRoundBets] = useState<Bet[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchRounds = async () => {
       setLoading(true);
       try {
-        const response = await apiService.getRoundHistory(currentPage, 20);
+        // Fetch a large batch for local pagination & search
+        const response = await apiService.getRoundHistory(1, 200);
         if (response.success && response.data) {
-          setRounds(response.data);
+          const items = response.data.items || response.data;
+          setRounds(Array.isArray(items) ? items : []);
         }
       } catch (error) {
         console.error('Failed to fetch rounds:', error);
@@ -36,7 +36,7 @@ export default function RoundsPage() {
     };
 
     fetchRounds();
-  }, [currentPage]);
+  }, []);
 
   const handleRoundClick = async (round: GameRound) => {
     try {
@@ -51,18 +51,66 @@ export default function RoundsPage() {
     }
   };
 
-  const getStatusColor = (status: RoundStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case RoundStatus.ACTIVE:
+      case 'ACTIVE':
         return 'cyan';
-      case RoundStatus.SETTLED:
+      case 'SETTLED':
         return 'success';
-      case RoundStatus.CANCELLED:
+      case 'CANCELLED':
         return 'danger';
       default:
         return 'default';
     }
   };
+
+  const columns = [
+    { key: 'roundNumber', label: 'Round', sortable: true, width: '100' },
+    {
+      key: 'status',
+      label: 'Status',
+      width: '150',
+      render: (value: any) => <Badge variant={getStatusColor(String(value))}>{String(value)}</Badge>,
+    },
+    {
+      key: 'openingResult',
+      label: 'Result',
+      width: '120',
+      render: (value: any) => (value && Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'),
+    },
+    {
+      key: 'totalStake',
+      label: 'Stake',
+      width: '130',
+      sortable: true,
+      render: (value: any) => `₹${Number(value).toLocaleString()}`,
+    },
+    {
+      key: 'totalPayout',
+      label: 'Payout',
+      width: '130',
+      sortable: true,
+      render: (value: any) => `₹${Number(value).toLocaleString()}`,
+    },
+    {
+      key: 'houseProfit',
+      label: 'House Profit',
+      width: '150',
+      sortable: true,
+      render: (value: any) => (
+        <span className={Number(value) > 0 ? 'text-emerald-400 font-bold' : Number(value) < 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
+          {Number(value) > 0 ? '+' : ''}₹{Number(value).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      key: 'startedAt',
+      label: 'Started',
+      width: '180',
+      sortable: true,
+      render: (value: any) => new Date(value as string).toLocaleTimeString(),
+    },
+  ];
 
   return (
     <>
@@ -72,64 +120,15 @@ export default function RoundsPage() {
         description="Monitor automated 60-second rounds and historical profitability."
       />
 
-      <SectionCard title="Round history" description="Chronological record of house engine settlements." noPadding>
-        <DataTable
-          columns={[
-            { key: 'roundNumber', label: 'Round', sortable: true, width: '100px' },
-            {
-              key: 'status',
-              label: 'Status',
-              width: '150px',
-              render: (value) => <Badge variant={getStatusColor(value as RoundStatus)}>{String(value)}</Badge>,
-            },
-            {
-              key: 'openingResult',
-              label: 'Result',
-              width: '120px',
-              render: (value) => (value && (value as any[]).length > 0 ? (value as number[]).join(', ') : '-'),
-            },
-            {
-              key: 'totalStake',
-              label: 'Stake',
-              width: '130px',
-              render: (value) => `₹${Number(value).toLocaleString()}`,
-            },
-            {
-              key: 'totalPayout',
-              label: 'Payout',
-              width: '130px',
-              render: (value) => `₹${Number(value).toLocaleString()}`,
-            },
-            {
-              key: 'houseProfit',
-              label: 'House Profit',
-              width: '130px',
-              render: (value) => (
-                <span className={Number(value) > 0 ? 'text-emerald-400 font-bold' : Number(value) < 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
-                  {Number(value) > 0 ? '+' : ''}₹{Number(value).toLocaleString()}
-                </span>
-              ),
-            },
-            {
-              key: 'startedAt',
-              label: 'Started',
-              width: '180px',
-              render: (value) => new Date(value as Date).toLocaleTimeString(),
-            },
-          ]}
-          data={rounds?.items || []}
+      <SectionCard title="Round history" description="Chronological record of house engine settlements.">
+        <TabulatorTable
+          columns={columns}
+          data={rounds}
           loading={loading}
           onRowClick={handleRoundClick}
+          paginationSize={20}
+          title="Round_History"
         />
-
-        {rounds ? (
-          <Pagination
-            currentPage={rounds.page}
-            totalPages={rounds.pages}
-            onPageChange={setCurrentPage}
-            loading={loading}
-          />
-        ) : null}
       </SectionCard>
 
       <DetailDrawer

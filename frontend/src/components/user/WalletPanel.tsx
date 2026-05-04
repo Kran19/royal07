@@ -10,7 +10,7 @@ type WalletTab = 'balance' | 'deposit' | 'withdraw' | 'history';
 
 type DepositReq = { id: string; amount: number; status: string; proofImageUrl?: string; createdAt: string };
 type WithdrawReq = { id: string; amount: number; upiOrAccount: string; status: string; createdAt: string };
-type TxRecord = { id: string; type: string; amount: number; status: string; createdAt: string };
+type TxRecord = { id: string; type: string; amount: number; status: string; adminRemark?: string; createdAt: string };
 
 type HistoryData = {
   transactions: TxRecord[];
@@ -54,6 +54,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
   const [history, setHistory] = useState<HistoryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ text: string; type: 'ok' | 'err' } | null>(null);
+  const [platformSettings, setPlatformSettings] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const authHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -82,6 +83,18 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
       if (data.success && data.data?.balance !== undefined) onBalanceChange(data.data.balance);
     } catch { /* ignore */ }
   };
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/settings/status`);
+      const data = await res.json();
+      if (data.success) setPlatformSettings(data.data);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   // ─── Deposit ───────────────────────────────────────────────────────────────
 
@@ -215,7 +228,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
         <div className="rounded-2xl bg-gradient-to-br from-yellow-500/10 to-amber-500/5 p-6 text-center ring-1 ring-yellow-500/20">
           <p className="text-sm font-bold uppercase tracking-widest text-yellow-400/70">Available Balance</p>
           <p className="mt-2 text-4xl font-black text-white">₹{balance.toLocaleString()}</p>
-          <p className="mt-1 text-xs text-slate-400">Includes ₹10,000 welcome bonus</p>
+
           <button
             type="button"
             onClick={refreshBalance}
@@ -235,11 +248,67 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                 <p className="font-bold text-yellow-400 mb-2">How to deposit:</p>
                 <ol className="list-decimal ml-4 space-y-1 text-slate-400">
                   <li>Enter the amount you want to deposit</li>
-                  <li>Pay via UPI/Bank transfer to our account </li>
+                  <li>Pay via UPI/Bank transfer to our account details below</li>
                   <li>Upload the payment screenshot as proof</li>
                   <li>Admin will verify and credit your account</li>
                 </ol>
               </div>
+
+              {platformSettings && (
+                <div className="rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-yellow-400/80">Pay to Account</h4>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase">Official</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {platformSettings.bankAccountName && (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">A/C Name</p>
+                        <p className="text-sm text-white font-mono">{platformSettings.bankAccountName}</p>
+                      </div>
+                    )}
+                    {platformSettings.bankAccountNumber && (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Account Number</p>
+                        <p className="text-sm text-white font-mono tracking-wider">{platformSettings.bankAccountNumber}</p>
+                      </div>
+                    )}
+                    {platformSettings.bankIfscCode && (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">IFSC Code</p>
+                        <p className="text-sm text-white font-mono">{platformSettings.bankIfscCode}</p>
+                      </div>
+                    )}
+                    {platformSettings.upiId && (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">UPI ID</p>
+                        <p className="text-sm text-yellow-400 font-mono select-all">{platformSettings.upiId}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {platformSettings.qrCodeUrl && (
+                    <div className="pt-2 flex flex-col items-center gap-2">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase">Scan to Pay</p>
+                      <div className="p-2 bg-white rounded-xl shadow-lg shadow-black/20">
+                        <img 
+                          src={`${API_BASE}${platformSettings.qrCodeUrl}`} 
+                          alt="Payment QR" 
+                          className="h-32 w-32 object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {platformSettings.paymentInstructions && (
+                    <div className="pt-2 border-t border-white/5">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Important Note</p>
+                      <p className="text-[11px] leading-relaxed text-slate-400 italic">{platformSettings.paymentInstructions}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-widest text-slate-400">
                   Amount (₹)
@@ -364,7 +433,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
 
       {/* History Tab */}
       {tab === 'history' && (
-        <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[75vh] md:max-h-[55vh] overflow-y-auto pr-1 custom-scrollbar">
           {!history ? (
             <div className="py-10 text-center text-slate-400">Loading...</div>
           ) : (
@@ -377,6 +446,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                       <div>
                         <p className="text-sm font-bold text-white">₹{d.amount.toLocaleString()}</p>
                         <p className="text-xs text-slate-400">{new Date(d.createdAt).toLocaleDateString()}</p>
+                        {(d as any).adminRemark && <p className="mt-1 text-[10px] text-rose-400 font-medium italic">Remark: {(d as any).adminRemark}</p>}
                       </div>
                       <StatusPill status={d.status} />
                     </div>
@@ -392,6 +462,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                         <p className="text-sm font-bold text-white">₹{w.amount.toLocaleString()}</p>
                         <p className="text-xs text-slate-400">{w.upiOrAccount}</p>
                         <p className="text-xs text-slate-500">{new Date(w.createdAt).toLocaleDateString()}</p>
+                        {(w as any).adminRemark && <p className="mt-1 text-[10px] text-rose-400 font-medium italic">Remark: {(w as any).adminRemark}</p>}
                       </div>
                       <StatusPill status={w.status} />
                     </div>
@@ -406,6 +477,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                       <div>
                         <p className="text-sm font-bold text-white">₹{t.amount.toLocaleString()}</p>
                         <p className="text-xs text-slate-400">{t.type}</p>
+                        {t.adminRemark && <p className="mt-1 text-[10px] text-rose-400 font-medium italic">Remark: {t.adminRemark}</p>}
                       </div>
                       <StatusPill status={t.status} />
                     </div>

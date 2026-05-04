@@ -23,8 +23,8 @@ async function main() {
   const salt = await bcrypt.genSalt(10);
 
   // 2. Create Admin Account
-  const adminMobile = '9998887766';
-  const adminPass = 'admin123';
+  const adminMobile = '1111111111';
+  const adminPass = 'King@0706';
   const adminHash = await bcrypt.hash(adminPass, salt);
   await prisma.user.upsert({
     where: { mobile: adminMobile },
@@ -40,23 +40,23 @@ async function main() {
   console.log(`✅ Admin created: ${adminMobile} / ${adminPass}`);
 
   // 3. Create Player Account
-  const userMobile = '7778889900';
-  const userPass = 'user123';
-  const userHash = await bcrypt.hash(userPass, salt);
-  await prisma.user.upsert({
-    where: { mobile: userMobile },
-    update: { role: 'PLAYER' },
-    create: {
-      mobile: userMobile,
-      passwordHash: userHash,
-      role: 'PLAYER',
-      balance: 10000,
-      isActive: true,
-    },
-  });
-  console.log(`✅ Player created: ${userMobile} / ${userPass}`);
+  // const userMobile = '7778889900';
+  // const userPass = 'user123';
+  // const userHash = await bcrypt.hash(userPass, salt);
+  // await prisma.user.upsert({
+  //   where: { mobile: userMobile },
+  //   update: { role: 'PLAYER' },
+  //   create: {
+  //     mobile: userMobile,
+  //     passwordHash: userHash,
+  //     role: 'PLAYER',
+  //     balance: 10000,
+  //     isActive: true,
+  //   },
+  // });
+  // console.log(`✅ Player created: ${userMobile} / ${userPass}`);
 
-  console.log('🟢 Hardened Seeding completed successfully.');
+  // console.log('🟢 Hardened Seeding completed successfully.');
 }
 
 main()

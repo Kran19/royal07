@@ -159,8 +159,13 @@ export const apiService = {
     return res.json();
   },
 
-  async getTransactionHistory(page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
-    const res = await fetch(`${API_BASE}/wallet/history?page=${page}&limit=${limit}`, {
+  async getTransactionHistory(page = 1, limit = 20, search?: string, type?: string, status?: string): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
+    const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) query.append('search', search);
+    if (type) query.append('type', type);
+    if (status) query.append('status', status);
+    
+    const res = await fetch(`${API_BASE}/wallet/admin/transactions?${query}`, {
       headers: this.getAuthHeaders(),
     });
     return res.json();
@@ -190,6 +195,21 @@ export const apiService = {
       method: 'PATCH',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(settings),
+    });
+    return res.json();
+  },
+
+  async uploadSettingsQr(file: File): Promise<ApiResponse<{ qrCodeUrl: string }>> {
+    const formData = new FormData();
+    formData.append('qrCode', file);
+
+    const headers = this.getAuthHeaders();
+    delete headers['Content-Type']; // Let browser set boundary
+
+    const res = await fetch(`${API_BASE}/settings/qr`, {
+      method: 'POST',
+      headers,
+      body: formData,
     });
     return res.json();
   },

@@ -8,3 +8,4 @@ export { Badge, StatusIndicator, ProgressBar } from './Badge';
 export { Pagination } from './Pagination';
 export { Modal } from './Modal';
 export { PageHeader, SectionCard, MobileActionRow } from './PageShell';
+export { default as TabulatorTable } from './TabulatorClient';

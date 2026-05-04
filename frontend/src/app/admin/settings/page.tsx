@@ -79,6 +79,22 @@ export default function SettingsPage() {
     }
   };
 
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const response = await apiService.uploadSettingsQr(file);
+      if (response.success && response.data?.qrCodeUrl) {
+        setSettings((prev) => prev ? { ...prev, qrCodeUrl: response.data.qrCodeUrl } : null);
+        setAlertState({ title: 'QR Code Uploaded', description: 'The QR Code has been securely saved to the server.', tone: 'success' });
+      }
+    } catch (e) {
+      console.error(e);
+      setAlertState({ title: 'Upload Failed', description: 'Could not upload the QR code image.', tone: 'danger' });
+    }
+  };
+
   if (loading || !settings) {
     return (
       <div className="glass-panel flex min-h-[320px] items-center justify-center rounded-3xl">
@@ -137,6 +153,54 @@ export default function SettingsPage() {
             checked={settings.maintenanceMode}
             onChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
           />
+        </SectionCard>
+        
+        <SectionCard title="Bank & Deposit Details">
+          <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+            <Input
+              label="Bank Account Name"
+              value={settings.bankAccountName || ''}
+              onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
+            />
+            <Input
+              label="Account Number"
+              value={settings.bankAccountNumber || ''}
+              onChange={(e) => setSettings({ ...settings, bankAccountNumber: e.target.value })}
+            />
+            <Input
+              label="IFSC Code"
+              value={settings.bankIfscCode || ''}
+              onChange={(e) => setSettings({ ...settings, bankIfscCode: e.target.value })}
+            />
+            <Input
+              label="UPI ID"
+              value={settings.upiId || ''}
+              onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
+            />
+          </div>
+          <div className="mt-4">
+            <TextArea
+              label="Payment Instructions"
+              value={settings.paymentInstructions || ''}
+              onChange={(e) => setSettings({ ...settings, paymentInstructions: e.target.value })}
+            />
+          </div>
+          <div className="mt-4 p-4 rounded-xl border border-white/5 bg-slate-900/50">
+             <label className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-4">Payment QR Code</label>
+             <div className="flex gap-6 items-center">
+               {settings.qrCodeUrl ? (
+                 <img src={`${apiService.getApiBase()}${settings.qrCodeUrl}`} className="h-24 w-24 rounded-lg object-contain bg-white p-1" />
+               ) : (
+                 <div className="h-24 w-24 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 text-xs border border-dashed border-slate-600">No QR</div>
+               )}
+               <input 
+                 type="file" 
+                 accept="image/*"
+                 onChange={handleQrUpload}
+                 className="text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:transition-all cursor-pointer"
+               />
+             </div>
+          </div>
         </SectionCard>
       </div>
 

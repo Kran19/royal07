@@ -2,49 +2,46 @@
 
 import { useEffect, useState } from 'react';
 import {
-  DataTable,
   DetailDrawer,
   FilterPanel,
   Button,
-  Input,
   Select,
   Badge,
-  Pagination,
   PageHeader,
   SectionCard,
+  TabulatorTable,
 } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
-import { Bet, BetType, BetStatus, PaginatedResponse } from '@/types';
+import { Bet, BetType, BetStatus } from '@/types';
 
 export default function BetsPage() {
-  const [bets, setBets] = useState<PaginatedResponse<Bet> | null>(null);
+  const [bets, setBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({ status: '', type: '' });
 
-  useEffect(() => {
-    const fetchBets = async () => {
-      setLoading(true);
-      try {
-        const response = await apiService.getAllBets(currentPage, 20, {
-          status: filters.status,
-          type: filters.type,
-        });
-        if (response.success && response.data) {
-          setBets(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch bets:', error);
-      } finally {
-        setLoading(false);
+  const fetchBets = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.getAllBets(1, 200, {
+        status: filters.status,
+        type: filters.type,
+      });
+      if (response.success && response.data) {
+        setBets(response.data.items || []);
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch bets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBets();
-  }, [currentPage, filters]);
+  }, [filters]);
 
   const getStatusColor = (status: BetStatus) => {
     switch (status) {
@@ -65,65 +62,68 @@ export default function BetsPage() {
         description="Monitor all bets placed across the 60-second automated rounds."
       />
 
-      <SectionCard title="All bets" description="Search and inspect every ticket in the house." noPadding>
-        <div className="flex flex-col gap-4 border-b border-white/5 p-6 lg:flex-row">
-          <div className="flex-1">
-            <Input placeholder="Search by user ID or bet ID" />
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button variant="secondary" onClick={() => setFilterOpen(true)}>
-              Filters
-            </Button>
-          </div>
-        </div>
-
-        <DataTable
+      <SectionCard title="All bets" description="Search and inspect every ticket in the house with pagination." noPadding>
+        <TabulatorTable
           columns={[
-            { key: 'id', label: 'Bet ID', sortable: true, width: '160px', render: (v) => String(v).slice(-8).toUpperCase() },
+            {
+              key: 'id',
+              label: 'Bet ID',
+              sortable: true,
+              width: '160',
+              render: (v: any) => <code className="text-xs text-slate-400">{String(v).slice(-8).toUpperCase()}</code>
+            },
             {
               key: 'userId',
               label: 'User',
               sortable: true,
-              width: '180px',
-              render: (_, row) => row.user?.mobile || String(row.userId).slice(-8),
+              width: '180',
+              render: (_: any, row: Bet) => row.user?.mobile || String(row.userId).slice(-8),
             },
             {
               key: 'betType',
               label: 'Type',
-              width: '140px',
-              render: (value) => <Badge variant="cyan">{String(value)}</Badge>,
+              width: '140',
+              hozAlign: 'center',
+              render: (value: any) => <Badge variant="cyan">{String(value)}</Badge>,
             },
             {
               key: 'status',
               label: 'Status',
-              width: '150px',
-              render: (value) => <Badge variant={getStatusColor(value as BetStatus)}>{String(value)}</Badge>,
+              width: '150',
+              hozAlign: 'center',
+              render: (value: any) => <Badge variant={getStatusColor(value as BetStatus)}>{String(value)}</Badge>,
             },
-            { key: 'amount', label: 'Stake', width: '130px', render: (value) => `₹${Number(value).toLocaleString()}` },
-            { key: 'settlementAmount', label: 'Payout', width: '130px', render: (value) => value ? `₹${Number(value).toLocaleString()}` : '-' },
+            {
+              key: 'amount',
+              label: 'Stake',
+              width: '130',
+              hozAlign: 'right',
+              sortable: true,
+              render: (value: any) => `₹${Number(value).toLocaleString()}`
+            },
+            {
+              key: 'settlementAmount',
+              label: 'Payout',
+              width: '130',
+              hozAlign: 'right',
+              render: (value: any) => value ? `₹${Number(value).toLocaleString()}` : '-'
+            },
             {
               key: 'createdAt',
               label: 'Created',
-              width: '160px',
-              render: (value) => new Date(value as Date).toLocaleTimeString(),
+              width: '160',
+              render: (value: any) => new Date(value as Date).toLocaleTimeString(),
             },
           ]}
-          data={bets?.items || []}
+          data={bets}
           loading={loading}
           onRowClick={(bet) => {
             setSelectedBet(bet);
             setDetailOpen(true);
           }}
+          paginationSize={20}
+          title="Bet_Operations"
         />
-
-        {bets ? (
-          <Pagination
-            currentPage={bets.page}
-            totalPages={bets.pages}
-            onPageChange={setCurrentPage}
-            loading={loading}
-          />
-        ) : null}
       </SectionCard>
 
       <FilterPanel isOpen={filterOpen} onClose={() => setFilterOpen(false)} title="Filter bets">

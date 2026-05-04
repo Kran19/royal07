@@ -17,7 +17,10 @@ export interface QuadProfitResult {
   margin: number;
   profitable: boolean;
   singlesPayout: number;
+  pairsPayout: number;
+  triplesPayout: number;
   quadPayout: number;
+  totalPayout: number;
   rank: number;
   roi: number;
 }
@@ -26,6 +29,26 @@ export interface QuadProfitResult {
 export class ProfitCalculatorService {
   private readonly allQuadruples = ALL_QUADRUPLES;
   private readonly multipliers = PAYOUT_MULTIPLIERS;
+  
+  private readonly QUAD_TO_PAIRS = new Map<string, string[]>();
+  private readonly QUAD_TO_TRIPLES = new Map<string, string[]>();
+
+  constructor() {
+    this.precomputeCombinations();
+  }
+
+  private precomputeCombinations() {
+    for (const quad of this.allQuadruples) {
+      const quadKey = quad.join(',');
+      const [a, b, c, d] = quad;
+      this.QUAD_TO_PAIRS.set(quadKey, [
+        `${a},${b}`, `${a},${c}`, `${a},${d}`, `${b},${c}`, `${b},${d}`, `${c},${d}`
+      ]);
+      this.QUAD_TO_TRIPLES.set(quadKey, [
+        `${a},${b},${c}`, `${a},${b},${d}`, `${a},${c},${d}`, `${b},${c},${d}`
+      ]);
+    }
+  }
 
   /**
    * Calculate profit for all 495 quadruples in O(495) time
@@ -63,25 +86,23 @@ export class ProfitCalculatorService {
       const singlesSum = singlesArray[a] + singlesArray[b] + singlesArray[c] + singlesArray[d];
       const singlesPayout = this.multipliers[1] * singlesSum;
       
+      // ── Quad payout: exact match only ──
+      const quadKey = [a, b, c, d].join(','); // allQuadruples are already sorted ascending
+      
       // ── Pairs payout: check all C(4,2)=6 pairs within this quad ──
       let pairsPayout = 0;
-      const pairCombos = [[a,b],[a,c],[a,d],[b,c],[b,d],[c,d]];
-      for (const [x, y] of pairCombos) {
-        const key = x < y ? `${x},${y}` : `${y},${x}`;
+      const pairs = this.QUAD_TO_PAIRS.get(quadKey) || [];
+      for (const key of pairs) {
         pairsPayout += this.multipliers[2] * (pairsMap.get(key) || 0);
       }
       
       // ── Triples payout: check all C(4,3)=4 triples within this quad ──
       let triplesPayout = 0;
-      const tripleCombos = [[a,b,c],[a,b,d],[a,c,d],[b,c,d]];
-      for (const [x, y, z] of tripleCombos) {
-        const sorted = [x, y, z].sort((p, q) => p - q);
-        const key = sorted.join(',');
+      const triples = this.QUAD_TO_TRIPLES.get(quadKey) || [];
+      for (const key of triples) {
         triplesPayout += this.multipliers[3] * (triplesMap.get(key) || 0);
       }
       
-      // ── Quad payout: exact match only ──
-      const quadKey = [a, b, c, d].join(','); // allQuadruples are already sorted ascending
       const quadPayout = this.multipliers[4] * (quadsMap.get(quadKey) || 0);
       
       const totalPayout = singlesPayout + pairsPayout + triplesPayout + quadPayout;
@@ -95,7 +116,10 @@ export class ProfitCalculatorService {
         margin: parseFloat(margin.toFixed(2)),
         profitable: profit > 0,
         singlesPayout: Math.round(singlesPayout),
-        quadPayout: Math.round(quadPayout + pairsPayout + triplesPayout),
+        pairsPayout: Math.round(pairsPayout),
+        triplesPayout: Math.round(triplesPayout),
+        quadPayout: Math.round(quadPayout),
+        totalPayout: Math.round(totalPayout),
         rank: 0,
         roi: parseFloat(roi.toFixed(4)),
       });
@@ -126,85 +150,46 @@ export class ProfitCalculatorService {
     };
   }
   
-  /**
-   * Fast path: Find best opening without checking all 495
-   * Returns null if no profitable opening found
-   */
-  findBestOpeningFast(betStats: BetStats): QuadProfitResult | null {
-    const singlesArray = new Array(13).fill(0);
-    for (let i = 1; i <= 12; i++) {
-      singlesArray[i] = betStats.singles.get(i) || 0;
-    }
-    
-    const quadsMap = betStats.quads;
-    const totalStake = betStats.totalStake;
-    
-    // Find numbers with lowest single bets
-    const numbersWithBets: [number, number][] = [];
-    for (let i = 1; i <= 12; i++) {
-      numbersWithBets.push([i, singlesArray[i]]);
-    }
-    numbersWithBets.sort((a, b) => a[1] - b[1]);
-    
-    // Try to find a quadruple with no quad bets
-    for (const quad of this.allQuadruples) {
-      const quadKey = [...quad].sort((a, b) => a - b).join(',');
-      if (!quadsMap.has(quadKey)) {
-        const singlesSum = singlesArray[quad[0]] + singlesArray[quad[1]] + 
-                           singlesArray[quad[2]] + singlesArray[quad[3]];
-        const profit = totalStake - (this.multipliers[1] * singlesSum);
-        
-        if (profit > 0) {
-          return {
-            opening: quad,
-            profit: Math.round(profit),
-            margin: parseFloat((profit / totalStake * 100).toFixed(2)),
-            profitable: true,
-            singlesPayout: this.multipliers[1] * singlesSum,
-            quadPayout: 0,
-            rank: 1,
-            roi: parseFloat((profit / totalStake).toFixed(4)),
-          };
-        }
-      }
-    }
-    
-    return null;
-  }
-  
+
   /**
    * Check if a specific opening is profitable
    */
   checkOpeningProfitability(
     betStats: BetStats,
     opening: number[]
-  ): {
-    opening: number[];
-    profit: number;
-    profitable: boolean;
-    margin: number;
-    singlesPayout: number;
-    quadPayout: number;
-    totalPayout: number;
-    totalStake: number;
-    roi: number;
-  } {
+  ): QuadProfitResult {
     const singlesArray = new Array(13).fill(0);
     for (let i = 1; i <= 12; i++) {
       singlesArray[i] = betStats.singles.get(i) || 0;
     }
     
-    const quadsMap = betStats.quads;
     const totalStake = betStats.totalStake;
     
-    const singlesSum = singlesArray[opening[0]] + singlesArray[opening[1]] + 
-                       singlesArray[opening[2]] + singlesArray[opening[3]];
+    const [a, b, c, d] = [...opening].sort((x, y) => x - y);
+    const quadKey = `${a},${b},${c},${d}`;
+    
+    const singlesSum = singlesArray[a] + singlesArray[b] + singlesArray[c] + singlesArray[d];
     const singlesPayout = this.multipliers[1] * singlesSum;
     
-    const quadKey = [...opening].sort((a, b) => a - b).join(',');
-    const quadPayout = this.multipliers[4] * (quadsMap.get(quadKey) || 0);
+    let pairsPayout = 0;
+    const pairs = this.QUAD_TO_PAIRS.get(quadKey) || [
+      `${a},${b}`, `${a},${c}`, `${a},${d}`, `${b},${c}`, `${b},${d}`, `${c},${d}`
+    ];
+    for (const key of pairs) {
+      pairsPayout += this.multipliers[2] * (betStats.pairs.get(key) || 0);
+    }
     
-    const totalPayout = singlesPayout + quadPayout;
+    let triplesPayout = 0;
+    const triples = this.QUAD_TO_TRIPLES.get(quadKey) || [
+      `${a},${b},${c}`, `${a},${b},${d}`, `${a},${c},${d}`, `${b},${c},${d}`
+    ];
+    for (const key of triples) {
+      triplesPayout += this.multipliers[3] * (betStats.triples.get(key) || 0);
+    }
+    
+    const quadPayout = this.multipliers[4] * (betStats.quads.get(quadKey) || 0);
+    
+    const totalPayout = singlesPayout + pairsPayout + triplesPayout + quadPayout;
     const profit = totalStake - totalPayout;
     const margin = totalStake > 0 ? (profit / totalStake * 100) : 0;
     const roi = totalStake > 0 ? profit / totalStake : 0;
@@ -215,9 +200,11 @@ export class ProfitCalculatorService {
       profitable: profit > 0,
       margin: parseFloat(margin.toFixed(2)),
       singlesPayout: Math.round(singlesPayout),
+      pairsPayout: Math.round(pairsPayout),
+      triplesPayout: Math.round(triplesPayout),
       quadPayout: Math.round(quadPayout),
       totalPayout: Math.round(totalPayout),
-      totalStake: Math.round(totalStake),
+      rank: 0,
       roi: parseFloat(roi.toFixed(4)),
     };
   }

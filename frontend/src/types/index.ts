@@ -182,8 +182,17 @@ export interface AuditLog {
 
 // Admin Settings Types
 export interface AdminSettings {
+  id: string;
   roundDuration: number;
   minBetAmount: number;
   maxBetAmount: number;
   maintenanceMode: boolean;
+  
+  // Payment Config
+  bankAccountName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIfscCode?: string | null;
+  upiId?: string | null;
+  qrCodeUrl?: string | null;
+  paymentInstructions?: string | null;
 }

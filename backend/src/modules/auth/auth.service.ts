@@ -27,23 +27,13 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         mobile: dto.mobile,
+        username: dto.username,
         passwordHash,
-        balance: 10000, // 💸 10,000 Welcome Bonus
+        balance: 0,
       }
     });
 
-    // Create a transaction record for the welcome bonus
-    await this.prisma.transaction.create({
-      data: {
-        userId: user.id,
-        type: 'ADJUSTMENT',
-        amount: new Decimal(10000) as any,
-        balanceBefore: new Decimal(0) as any,
-        balanceAfter: new Decimal(10000) as any,
-        status: 'COMPLETED',
-        description: 'Welcome Bonus'
-      }
-    });
+
 
     return this.generateTokenResponse(user);
   }

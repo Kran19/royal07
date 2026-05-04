@@ -2,52 +2,44 @@
 
 import { useEffect, useState } from 'react';
 import {
-  DataTable,
   FilterPanel,
   DetailDrawer,
   Button,
-  Input,
   Select,
   Badge,
   StatusIndicator,
-  Pagination,
   PageHeader,
   SectionCard,
+  TabulatorTable,
 } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
-import { User, UserStatus, PaginatedResponse } from '@/types';
+import { User, UserStatus } from '@/types';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<PaginatedResponse<User> | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({ search: '', status: '' });
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const response = await apiService.getUsers(
-          currentPage,
-          20,
-          filters.search,
-          filters.status as UserStatus | undefined
-        );
-        if (response.success && response.data) {
-          setUsers(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      } finally {
-        setLoading(false);
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.getUsers(1, 200, filters.search, filters.status as UserStatus | undefined);
+      if (response.success && response.data) {
+        setUsers(response.data.items || []);
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
-  }, [currentPage, filters]);
+  }, [filters]);
 
   const handleUserClick = async (user: User) => {
     try {
@@ -67,15 +59,7 @@ export default function UsersPage() {
       const response = await apiService.updateUserStatus(selectedUser.id, status);
       if (response.success && response.data) {
         setSelectedUser(response.data);
-        const refreshed = await apiService.getUsers(
-          currentPage,
-          20,
-          filters.search,
-          filters.status as UserStatus | undefined
-        );
-        if (refreshed.success && refreshed.data) {
-          setUsers(refreshed.data);
-        }
+        fetchUsers();
       }
     } catch (error) {
       console.error('Failed to update user status:', error);
@@ -95,27 +79,28 @@ export default function UsersPage() {
         description="Search the user base and open details for account actions."
         noPadding
       >
-        <DataTable
+        <TabulatorTable
           columns={[
             {
               key: 'username',
               label: 'Username',
               sortable: true,
-              width: '180px',
-              render: (value, row) => value || row.mobile || '-',
+              width: '180',
+              render: (value: any, row: User) => value || row.mobile || '-',
             },
             {
               key: 'email',
               label: 'Email',
               sortable: true,
-              width: '260px',
-              render: (value) => value || '-',
+              width: '260',
+              render: (value: any) => value || '-',
             },
             {
               key: 'status',
               label: 'Status',
-              width: '160px',
-              render: (value) => (
+              width: '160',
+              hozAlign: 'center',
+              render: (value: any) => (
                 <StatusIndicator
                   status={value === UserStatus.ACTIVE ? 'active' : 'inactive'}
                   label={String(value)}
@@ -125,41 +110,34 @@ export default function UsersPage() {
             {
               key: 'balance',
               label: 'Balance',
-              width: '140px',
-              render: (value) => `₹${Number(value).toLocaleString()}`,
+              width: '140',
+              hozAlign: 'right',
+              sortable: true,
+              render: (value: any) => `₹${Number(value).toLocaleString()}`,
             },
             {
               key: 'totalBets',
               label: 'Bets',
-              width: '120px',
-              render: (value) => Number(value).toLocaleString(),
+              width: '120',
+              hozAlign: 'right',
+              sortable: true,
+              render: (value: any) => Number(value).toLocaleString(),
             },
             {
               key: 'isActive',
               label: 'Risk',
-              width: '120px',
-              render: (value) =>
+              width: '120',
+              hozAlign: 'center',
+              render: (value: any) =>
                 value ? <Badge variant="default">Clear</Badge> : <Badge variant="danger">Inactive</Badge>,
             },
           ]}
-          data={users?.items || []}
+          data={users}
           loading={loading}
           onRowClick={handleUserClick}
-          actions={
-            <Button variant="secondary" onClick={() => setFilterOpen(true)}>
-              Advanced Filters
-            </Button>
-          }
+          paginationSize={20}
+          title="Users_Directory"
         />
-
-        {users ? (
-          <Pagination
-            currentPage={users.page}
-            totalPages={users.pages}
-            onPageChange={setCurrentPage}
-            loading={loading}
-          />
-        ) : null}
       </SectionCard>
 
       <FilterPanel isOpen={filterOpen} onClose={() => setFilterOpen(false)} title="Filter users">
@@ -172,7 +150,6 @@ export default function UsersPage() {
             ]}
             value={filters.status}
             onChange={(event) => {
-              setCurrentPage(1);
               setFilters((current) => ({ ...current, status: event.target.value }));
             }}
           />
@@ -263,3 +240,4 @@ function MetricRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

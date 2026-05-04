@@ -3,13 +3,15 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlaceBetDto } from './dto/place-bet.dto';
 import { GameLifecycleService } from '../game/game-lifecycle.service';
+import { SettingsService } from '../settings/settings.service';
 import { BetStatus, BetType } from '@prisma/client';
 
 @Injectable()
 export class BetService {
   constructor(
     private prisma: PrismaService,
-    private gameLifecycle: GameLifecycleService
+    private gameLifecycle: GameLifecycleService,
+    private settingsService: SettingsService
   ) {}
 
   async placeBet(userId: string, dto: PlaceBetDto) {
@@ -23,15 +25,31 @@ export class BetService {
       throw new BadRequestException({ success: false, error: { code: 'BET_005', message: 'No active round found' } });
     }
 
+    // Check system settings (Maintenance Mode & Betting Limits)
+    const settingsResponse = await this.settingsService.getSettings();
+    if (settingsResponse.data?.maintenanceMode) {
+      throw new BadRequestException({ success: false, error: { code: 'BET_MAINTENANCE', message: 'System is currently under maintenance' } });
+    }
+
+    const minBet = settingsResponse.data?.minBetAmount || 10;
+    const maxBet = settingsResponse.data?.maxBetAmount || 100000;
+    
+    const amount = new Decimal(dto.amount);
+    const deductAmount = (dto.betType as string) === 'SINGLE'
+      ? amount.mul(dto.numbers.length)
+      : amount;
+
+    if (amount.lt(minBet)) {
+      throw new BadRequestException({ success: false, error: { code: 'BET_006', message: `Minimum stake amount per bet is ₹${minBet}` } });
+    }
+    if (deductAmount.gt(maxBet)) {
+      throw new BadRequestException({ success: false, error: { code: 'BET_007', message: `Maximum total bet risk cannot exceed ₹${maxBet}` } });
+    }
+
     // 2. Wrap in transaction checking balance
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       
-      const amount = new Decimal(dto.amount);
-      const deductAmount = (dto.betType as string) === 'SINGLE'
-        ? amount.mul(dto.numbers.length)
-        : amount;
-
       if (!user || user.balance.lt(deductAmount) || deductAmount.lte(0)) {
         throw new BadRequestException({
           success: false,
@@ -77,11 +95,12 @@ export class BetService {
         data: {
           userId,
           type: 'BET_PLACED',
-          amount: amount as any,
+          amount: deductAmount as any,
           balanceBefore: (user as any).balance as any,
           balanceAfter: (updatedUser as any).balance as any,
           status: 'COMPLETED',
-          reference: bet.id
+          reference: bet.id,
+          description: `Placed ${dto.betType} bet on [${dto.numbers.join(', ')}] @ ₹${amount.toNumber()}/floor`
         }
       });
 

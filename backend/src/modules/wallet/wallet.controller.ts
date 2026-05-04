@@ -105,6 +105,25 @@ export class WalletController {
     );
   }
 
+  @Get('admin/transactions')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UseGuards(RolesGuard)
+  async getAllAdminTransactions(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: TransactionStatus,
+    @Query('type') type?: string,
+  ) {
+    return this.walletService.getAllAdminTransactions(
+      page ? parseInt(page) : 1,
+      limit ? parseInt(limit) : 20,
+      search,
+      status,
+      type
+    );
+  }
+
   @Post('admin/:id/:action')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseGuards(RolesGuard)

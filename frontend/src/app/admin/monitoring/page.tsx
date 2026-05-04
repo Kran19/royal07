@@ -1,24 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { StatCard, Badge, ProgressBar, PageHeader, SectionCard, DataTable } from '@/components/admin/common';
+import { StatCard, Badge, PageHeader, SectionCard, TabulatorTable } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
-import { BetStats, GameRound, RoundStatus } from '@/types';
+import { BetStats, GameRound } from '@/types';
 
 export default function MonitoringPage() {
   const [stats, setStats] = useState<BetStats | null>(null);
   const [rounds, setRounds] = useState<GameRound[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = async () => {
+  const fetchData = async () => {
     try {
       const [statsRes, roundsRes] = await Promise.all([
         apiService.getCurrentHouseStats(),
-        apiService.getRoundHistory(1, 10),
+        apiService.getRoundHistory(1, 100),
       ]);
-      
+
       if (statsRes.success && statsRes.data) setStats(statsRes.data);
-      if (roundsRes.success && roundsRes.data) setRounds(roundsRes.data.items);
+      if (roundsRes.success && roundsRes.data) {
+        // Backend returns { items, meta: { pages, ... } }
+        const items = roundsRes.data.items || roundsRes.data;
+        setRounds(Array.isArray(items) ? items : []);
+      }
     } catch (error) {
       console.error('Failed to fetch monitoring data:', error);
     } finally {
@@ -27,10 +31,54 @@ export default function MonitoringPage() {
   };
 
   useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 5000);
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const columns = [
+    { key: 'roundNumber', label: 'Round', width: '100', sortable: true },
+    {
+      key: 'status',
+      label: 'Status',
+      width: '120',
+      hozAlign: 'center' as const,
+      render: (value: any) => (
+        <Badge variant={value === 'SETTLED' ? 'success' : 'warning'}>{String(value)}</Badge>
+      ),
+    },
+    {
+      key: 'totalStake',
+      label: 'Total Stake',
+      hozAlign: 'right' as const,
+      sortable: true,
+      render: (v: any) => `₹${Number(v).toLocaleString()}`
+    },
+    {
+      key: 'totalPayout',
+      label: 'Total Payout',
+      hozAlign: 'right' as const,
+      sortable: true,
+      render: (v: any) => `₹${Number(v).toLocaleString()}`
+    },
+    {
+      key: 'houseProfit',
+      label: 'House P/L',
+      hozAlign: 'right' as const,
+      sortable: true,
+      render: (v: any) => (
+        <span className={Number(v) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+          {Number(v) >= 0 ? '+' : ''}₹{Number(v).toLocaleString()}
+        </span>
+      )
+    },
+    {
+      key: 'startedAt',
+      label: 'Started',
+      width: '140',
+      render: (v: any) => new Date(v as string).toLocaleTimeString()
+    }
+  ];
 
   return (
     <>
@@ -48,45 +96,13 @@ export default function MonitoringPage() {
       </div>
 
       <div className="mt-6">
-        <SectionCard title="Recent Round History" description="Chronological overview of automated settlements.">
-          <DataTable
-            columns={[
-              { key: 'roundNumber', label: 'Round ID', width: '100px' },
-              {
-                key: 'status',
-                label: 'Status',
-                width: '120px',
-                render: (value) => (
-                  <Badge variant={value === 'SETTLED' ? 'success' : 'warning'}>{String(value)}</Badge>
-                ),
-              },
-              {
-                key: 'totalStake',
-                label: 'Total Stake',
-                render: (v) => `₹${Number(v).toLocaleString()}`
-              },
-              {
-                key: 'totalPayout',
-                label: 'Total Payout',
-                render: (v) => `₹${Number(v).toLocaleString()}`
-              },
-              {
-                key: 'houseProfit',
-                label: 'House Win/Loss',
-                render: (v) => (
-                  <span className={Number(v) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                    {Number(v) >= 0 ? '+' : ''}₹{Number(v).toLocaleString()}
-                  </span>
-                )
-              },
-              {
-                key: 'startedAt',
-                label: 'Started At',
-                render: (v) => new Date(v as string).toLocaleTimeString()
-              }
-            ]}
+        <SectionCard title="Recent Round History" description="Chronological overview of automated settlements with full pagination.">
+          <TabulatorTable
+            columns={columns}
             data={rounds}
             loading={loading}
+            paginationSize={10}
+            title="Round_History"
           />
         </SectionCard>
       </div>

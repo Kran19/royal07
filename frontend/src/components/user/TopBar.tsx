@@ -13,7 +13,7 @@ function TopBar({ balance, onWalletOpen, onLogout }: TopBarProps) {
         <p className="kicker">Elevator Royale</p>
         <h1>30s Round Lobby</h1>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="top-actions">
         <div className="balance-card">
           <span>Wallet</span>
           <strong>₹{typeof balance === 'number' ? balance.toLocaleString() : balance}</strong>
@@ -22,18 +22,8 @@ function TopBar({ balance, onWalletOpen, onLogout }: TopBarProps) {
         {onWalletOpen && (
           <button
             type="button"
+            className="top-wallet-btn"
             onClick={onWalletOpen}
-            style={{
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              border: 'none',
-              borderRadius: '12px',
-              color: '#000',
-              cursor: 'pointer',
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              padding: '0.5rem 1rem',
-              letterSpacing: '0.05em',
-            }}
           >
             💳 Wallet
           </button>
@@ -42,20 +32,15 @@ function TopBar({ balance, onWalletOpen, onLogout }: TopBarProps) {
         {onLogout && (
           <button
             type="button"
+            className="top-logout-btn"
             onClick={onLogout}
             title="Sign Out"
-            style={{
-              background: 'rgba(244, 63, 94, 0.1)',
-              border: '1px solid rgba(244, 63, 94, 0.2)',
-              borderRadius: '12px',
-              color: '#fb7185',
-              cursor: 'pointer',
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              padding: '0.5rem 0.75rem',
-            }}
           >
-            🚪
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
           </button>
         )}
       </div>

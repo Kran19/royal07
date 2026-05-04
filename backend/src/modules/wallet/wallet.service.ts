@@ -193,6 +193,55 @@ export class WalletService {
     };
   }
 
+  async getAllAdminTransactions(
+    page: number = 1,
+    limit: number = 20,
+    search?: string,
+    status?: TransactionStatus,
+    type?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (type) where.type = type;
+    if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { user: { mobile: { contains: search, mode: 'insensitive' } } }
+      ];
+    }
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        include: {
+          user: { select: { mobile: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      this.prisma.transaction.count({ where })
+    ]);
+
+    return {
+      success: true,
+      data: {
+        items: transactions.map(t => ({
+          ...t,
+          userId: (t as any).user?.mobile || t.userId // Map mobile number to userId column for display
+        })),
+        meta: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    };
+  }
+
   async processTransaction(id: string, action: 'approve' | 'reject', adminNote?: string) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
@@ -225,7 +274,7 @@ export class WalletService {
             where: { id },
             data: {
               status: 'COMPLETED',
-              description: adminNote || transaction.description,
+              adminRemark: adminNote,
               settledAt: new Date(),
               balanceAfter: transaction.balanceBefore.add(transaction.amount) as any
             }
@@ -239,7 +288,7 @@ export class WalletService {
           where: { id },
           data: {
             status: 'COMPLETED',
-            description: adminNote || transaction.description,
+            adminRemark: adminNote,
             settledAt: new Date()
           }
         });
@@ -263,7 +312,7 @@ export class WalletService {
           where: { id },
           data: {
             status: 'FAILED',
-            description: adminNote || 'Rejected by admin',
+            adminRemark: adminNote || 'Rejected by admin',
             settledAt: new Date()
           }
         });

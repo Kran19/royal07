@@ -1,2 +1,0 @@
-﻿royal-api: https://cd3e-2402-a00-403-12b4-6804-2915-15f9-9217.ngrok-free.app
-royal-web: https://564d-2402-a00-403-12b4-6804-2915-15f9-9217.ngrok-free.app

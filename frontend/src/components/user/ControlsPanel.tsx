@@ -69,14 +69,14 @@ function ControlsPanel({
           onClick={() => setMode('SIMPLE')}
           type="button"
         >
-          Single (4x)
+          Single (3x)
         </button>
         <button
           className={mode === 'PAIR' ? 'mode-btn active' : 'mode-btn'}
           onClick={() => setMode('PAIR')}
           type="button"
         >
-          Combo (11x / 21x / 31x)
+          Combo (10x / 20x / 30x)
         </button>
       </div>
 

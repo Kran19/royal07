@@ -60,6 +60,7 @@ function App() {
   const { user, token: authToken, isLoggedIn, login, logout, isLoading: isAuthLoading } = useAuth();
   const authUserId = user?.id || '';
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [userName, setUserName] = useState('');
   const [userMobile, setUserMobile] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -636,32 +637,50 @@ function App() {
         <AuthForm 
           mode={authMode} 
           setMode={setAuthMode}
+          name={userName} setName={setUserName}
           mobile={userMobile} setMobile={setUserMobile}
           password={userPassword} setPassword={setUserPassword}
           confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
           loading={authLoading}
+          pushToast={pushToast}
           onSubmit={async () => {
+            if (userMobile.length !== 10) {
+              pushToast('Mobile number must be 10 digits', 'error');
+              return;
+            }
+            if (authMode === 'register' && userPassword !== confirmPassword) {
+              pushToast('Passwords do not match', 'error');
+              return;
+            }
+            if (authMode === 'register' && !userName) {
+              pushToast('Please enter your name', 'error');
+              return;
+            }
+
             setAuthLoading(true);
             try {
               const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
+              const body = authMode === 'register' 
+                ? { mobile: userMobile.trim(), username: userName.trim(), password: userPassword }
+                : { mobile: userMobile.trim(), password: userPassword };
+
               const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mobile: userMobile.trim(), password: userPassword }),
+                body: JSON.stringify(body),
               });
               const data = await res.json();
               if (data.success) {
                 setBalance(data.data.user.balance);
                 login(data.data.token, data.data.user);
                 playSound('ding');
-                pushToast(authMode === 'register' ? 'Welcome! Account created successfully.' : 'Welcome back!', 'info');
+                pushToast(authMode === 'register' ? 'Welcome! Account created successfully.' : 'Welcome back!', 'success');
               } else {
-                // Handle nested error message from backend
                 const errorMsg = data.error?.message || data.message || 'Authentication failed';
-                pushToast(errorMsg, 'loss');
+                pushToast(errorMsg, 'error');
               }
             } catch (err) {
-              pushToast('Server error. Try again.', 'loss');
+              pushToast('Server error. Try again.', 'error');
               console.error('Auth error:', err);
             }
             setAuthLoading(false);
@@ -852,63 +871,168 @@ function App() {
 }
 
 
-function AuthForm({ mode, setMode, mobile, setMobile, password, setPassword, confirmPassword, setConfirmPassword, loading, onSubmit }: any) {
+function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, setPassword, confirmPassword, setConfirmPassword, loading, onSubmit, pushToast }: any) {
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, ''); 
+    if (val.length <= 10) {
+      setMobile(val);
+    }
+  };
+
+  const handleSendOtp = () => {
+    if (mobile.length !== 10) {
+      pushToast('Enter 10-digit mobile first', 'error');
+      return;
+    }
+    setOtpLoading(true);
+    // Simulation
+    setTimeout(() => {
+      setOtpSent(true);
+      setOtpLoading(false);
+      pushToast('OTP sent to ' + mobile, 'success');
+      // Testing Auto-fill
+      setTimeout(() => {
+        setOtp('123456');
+        setIsVerified(true);
+        pushToast('Mobile Verified!', 'success');
+      }, 1000);
+    }, 800);
+  };
+
+  const resetOtp = () => {
+    setOtpSent(false);
+    setOtp('');
+    setIsVerified(false);
+  };
+
   return (
-    <div className="panel max-w-sm w-full mx-auto mt-[10svh] p-8 relative z-10" style={{ borderTop: '4px solid #f59e0b' }}>
-      <h2 className="text-2xl font-bold text-yellow-400 text-center mb-2" style={{ fontFamily: 'Sora' }}>RoyalBet Gateway</h2>
-      <p className="text-center text-slate-400 text-sm mb-6">{mode === 'login' ? 'Welcome back!' : 'Create your account'}</p>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-slate-400 text-xs mb-1 uppercase tracking-widest font-bold">Mobile Number</label>
-          <input 
-            type="tel" 
-            className="amount-input w-full"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            placeholder="e.g. 9876543210"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-slate-400 text-xs mb-1 uppercase tracking-widest font-bold">Password</label>
-          <input 
-            type="password" 
-            className="amount-input w-full"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-          />
+    <div className="auth-container">
+      <div className="auth-card animate-in fade-in zoom-in duration-500">
+        <div className="auth-header mb-4">
+          <h2 className="!text-xl">RoyalBet</h2>
+          <p className="!text-xs">{mode === 'login' ? 'Enter the arena' : 'Join the community'}</p>
         </div>
 
-        {mode === 'register' && (
-          <div>
-            <label className="block text-slate-400 text-xs mb-1 uppercase tracking-widest font-bold">Confirm Password</label>
-            <input 
-              type="password" 
-              className="amount-input w-full"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter password"
-            />
+        <div className="space-y-3">
+          {mode === 'register' && (
+            <div className="input-group animate-in slide-in-from-top-4">
+              <input 
+                type="text" 
+                className="amount-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Full Name"
+                disabled={loading}
+              />
+            </div>
+          )}
+
+          <div className="input-group">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">+91</span>
+                <input 
+                  type="tel" 
+                  className="amount-input !pl-14"
+                  value={mobile}
+                  onChange={handleMobileChange}
+                  placeholder="Mobile Number"
+                  disabled={loading || (mode === 'register' && otpSent)}
+                />
+              </div>
+              {mode === 'register' && (
+                !isVerified ? (
+                  <button 
+                    onClick={handleSendOtp} 
+                    disabled={otpLoading || mobile.length !== 10}
+                    className="otp-btn"
+                  >
+                    {otpLoading ? '...' : 'Send OTP'}
+                  </button>
+                ) : (
+                  <div className="verified-badge">✓ Verified</div>
+                )
+              )}
+            </div>
           </div>
-        )}
-        
-        <button 
-          className="primary-btn w-full py-4 text-sm mt-3"
-          disabled={loading}
-          onClick={onSubmit}
-        >
-          {loading ? 'Please wait...' : (mode === 'login' ? 'Enter Casino' : 'Create Account')}
-        </button>
 
-        <button
-          type="button"
-          className="w-full text-center text-sm text-slate-400 hover:text-white transition-colors py-2"
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-        >
-          {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Login'}
-        </button>
+          {mode === 'register' && otpSent && !isVerified && (
+            <div className="input-group animate-in slide-in-from-top-2">
+              <input 
+                type="text" 
+                className="amount-input"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0,6))}
+                placeholder="Enter 6-Digit OTP"
+                disabled={loading}
+              />
+            </div>
+          )}
+          
+          <div className="input-group">
+            <div className="password-wrapper">
+              <input 
+                type={showPass ? "text" : "password"} 
+                className="amount-input !pr-14"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                disabled={loading}
+              />
+              <button type="button" className="password-toggle !top-1/2 !-translate-y-1/2" onClick={() => setShowPass(!showPass)}>
+                {showPass ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+
+          {mode === 'register' && (
+            <div className="input-group animate-in slide-in-from-top-4">
+              <div className="password-wrapper">
+                <input 
+                  type={showConfirm ? "text" : "password"} 
+                  className="amount-input !pr-14"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  disabled={loading}
+                />
+                <button type="button" className="password-toggle !top-1/2 !-translate-y-1/2" onClick={() => setShowConfirm(!showConfirm)}>
+                  {showConfirm ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <button 
+            className="primary-btn w-full !py-3 !text-sm mt-2 transform active:scale-[0.98] transition-all hover:brightness-110"
+            disabled={loading || (mode === 'register' && !isVerified)}
+            onClick={onSubmit}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+                Processing...
+              </span>
+            ) : (mode === 'register' && !isVerified ? 'Verify Mobile First' : (mode === 'login' ? 'Enter Casino' : 'Join Now'))}
+          </button>
+
+          <div className="auth-footer !mt-2">
+            <p className="auth-link !text-xs">
+              {mode === 'login' ? (
+                <>New here? <strong onClick={() => { setMode('register'); resetOtp(); }}>Register</strong></>
+              ) : (
+                <>Already a member? <strong onClick={() => { setMode('login'); resetOtp(); }}>Login</strong></>
+              )}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

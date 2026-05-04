@@ -148,6 +148,7 @@ model Transaction {
   status        TransactionStatus @default(PENDING)
   reference     String?         // Bet ID or Deposit ID
   description   String?
+  adminRemark   String?
   metadata      Json?           // Extra debug data (IP, Device, etc)
   createdAt     DateTime        @default(now())
   settledAt     DateTime?
@@ -214,12 +215,21 @@ enum TransactionStatus {
 
 // Admin Settings
 model AdminSettings {
-  id              String   @id @default("default-settings")
-  roundDuration   Int      @default(60)
-  minBetAmount    Decimal  @default(10) @db.Decimal(18, 2)
-  maxBetAmount    Decimal  @default(100000) @db.Decimal(18, 2)
-  maintenanceMode Boolean  @default(false)
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default("default-settings")
+  roundDuration       Int      @default(60)
+  minBetAmount        Decimal  @default(10) @db.Decimal(18, 2)
+  maxBetAmount        Decimal  @default(100000) @db.Decimal(18, 2)
+  maintenanceMode     Boolean  @default(false)
+  
+  // Payment Details
+  bankAccountName     String?
+  bankAccountNumber   String?
+  bankIfscCode        String?
+  upiId               String?
+  qrCodeUrl           String?
+  paymentInstructions String?
+  
+  updatedAt           DateTime @updatedAt
 }
 
 // Audit Logs
