@@ -80,6 +80,7 @@ ngrok-config.yml
 docker-compose.live.yml
 docker-compose.local.yml
 archive/
+**/archive/
 
 # Logs and Error reports
 *.txt
