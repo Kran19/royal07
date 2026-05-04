@@ -203,7 +203,7 @@ export const apiService = {
     const formData = new FormData();
     formData.append('qrCode', file);
 
-    const headers = this.getAuthHeaders();
+    const headers: any = this.getAuthHeaders();
     delete headers['Content-Type']; // Let browser set boundary
 
     const res = await fetch(`${API_BASE}/settings/qr`, {
