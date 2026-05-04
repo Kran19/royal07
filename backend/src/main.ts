@@ -10,8 +10,16 @@ dotenv.config();
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   try {
-    const app = await NestFactory.create(AppModule);
-    logger.log('✅ Nest Application Created');
+    const app = await NestFactory.create(AppModule, {
+      bodyParser: true,
+    });
+    
+    // Increase body limits for large image uploads
+    const { json, urlencoded } = require('express');
+    app.use(json({ limit: '100mb' }));
+    app.use(urlencoded({ limit: '100mb', extended: true }));
+    
+    logger.log('✅ Nest Application Created with 100MB limits');
     
     app.useGlobalPipes(new ValidationPipe({
       whitelist: true,
