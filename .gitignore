@@ -80,3 +80,24 @@ ngrok-config.yml
 docker-compose.live.yml
 docker-compose.local.yml
 archive/
+
+# Logs and Error reports
+*.txt
+*.log
+*.err
+build_errors.txt
+compile_errors.txt
+ts_errors.txt
+
+# Temporary scripts and JS fixes
+fix.js
+fix_modules.js
+debug-auth.js
+test-game-flow.js
+verify-final.js
+fix_schema.sql
+
+# Media and Uploads
+backend/uploads/
+frontend/public/uploads/
+**/uploads/
