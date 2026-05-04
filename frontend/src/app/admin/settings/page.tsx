@@ -86,7 +86,8 @@ export default function SettingsPage() {
     try {
       const response = await apiService.uploadSettingsQr(file);
       if (response.success && response.data?.qrCodeUrl) {
-        setSettings((prev) => prev ? { ...prev, qrCodeUrl: response.data.qrCodeUrl } : null);
+        const qrCodeUrl = response.data.qrCodeUrl;
+        setSettings((prev) => prev ? { ...prev, qrCodeUrl } : null);
         setAlertState({ title: 'QR Code Uploaded', description: 'The QR Code has been securely saved to the server.', tone: 'success' });
       }
     } catch (e) {
