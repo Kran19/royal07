@@ -266,12 +266,14 @@ export class GameLifecycleService implements OnModuleInit {
     // ── Step 3: Read ALL BetPlacedEvents from Redis stream (O(N)) ────────
     const streamKey  = RedisKeys.roundBetsStream(this.currentRoundId);
     const allEntries = await this.eventStream.readAllEvents(streamKey);
+    const t0 = Date.now();
 
     const betEvents: BetPlacedEvent[] = allEntries
       .map(e => { try { return JSON.parse(e.data); } catch { return null; } })
       .filter((e): e is BetPlacedEvent => e !== null && e.type === EventType.BET_PLACED);
 
     this.logger.log(`Loaded ${betEvents.length} bet events from Redis stream`);
+    const uniqueUsers = new Set<string>();
 
     // ── Step 4: Pre-index bets into 4 lookup Maps (O(N), done once) ──────
     // singles: floor → total stake on that floor (for multiplier × 3 calculation)
@@ -287,6 +289,7 @@ export class GameLifecycleService implements OnModuleInit {
     const QUAD_MULTI   = 30;
 
     for (const bet of betEvents) {
+      uniqueUsers.add(bet.userId);
       const amount = parseFloat(bet.amount);
       const sorted = [...bet.numbers].sort((a, b) => a - b);
 
@@ -392,6 +395,21 @@ export class GameLifecycleService implements OnModuleInit {
 
     this.currentResult    = [...chosenQuad].sort((a, b) => a - b);
     this.calculatedProfit = new Decimal(totalStake - chosenPayout);
+
+    // ── Step 8: Save BetStats to Postgres for Admin Dashboard ────────────
+    this.prisma.betStats.create({
+      data: {
+        roundId: this.currentRoundId,
+        singlesData: Object.fromEntries(singlesMap) as any,
+        pairsData: Object.fromEntries(pairsMap) as any,
+        triplesData: Object.fromEntries(triplesMap) as any,
+        quadsData: Object.fromEntries(quadsMap) as any,
+        totalStake,
+        totalBets: betEvents.length,
+        uniqueUsers: uniqueUsers.size,
+        calculationTimeMs: Date.now() - t0,
+      }
+    }).catch(e => this.logger.error(`Failed to save BetStats: ${e.message}`));
 
     this.logger.log(
       `Result: [${this.currentResult.join(',')}] | ` +
