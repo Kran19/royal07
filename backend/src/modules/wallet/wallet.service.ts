@@ -348,13 +348,7 @@ export class WalletService {
       (action === 'reject' && transaction.type === 'WITHDRAW');
 
     if (shouldSyncRedis) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: transaction.userId },
-        select: { balance: true }
-      });
-      if (user) {
-        await this.eventStream.seedUserBalance(transaction.userId, user.balance.toFixed(2));
-      }
+      await this.eventStream.invalidateUserBalance(transaction.userId);
     }
 
     return res;

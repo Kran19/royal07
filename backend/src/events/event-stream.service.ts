@@ -144,6 +144,20 @@ export class EventStreamService implements OnModuleInit {
   }
 
   /**
+   * Invalidates a user's balance cache in Redis.
+   * This forces the next balance read to fetch the latest value from Postgres.
+   * Used when an admin manually modifies a balance (e.g., deposits/withdrawals).
+   */
+  async invalidateUserBalance(userId: string): Promise<void> {
+    const client = this.redisService.getClient();
+    await client.del(
+      RedisKeys.userBalance(userId),
+      RedisKeys.userBalanceVersion(userId)
+    );
+    this.logger.debug(`Invalidated Redis balance cache for user ${userId}`);
+  }
+
+  /**
    * Reads a user's live balance from Redis.
    * Returns null if not yet seeded (caller should fall back to Postgres).
    */
