@@ -116,8 +116,8 @@ export class WalletService {
         throw new ConflictException({ success: false, error: { message: 'Transaction conflict, please try again' } });
       }
 
-      // Sync Redis balance cache with the new Postgres balance
-      await this.eventStream.seedUserBalance(userId, updatedUser.balance.toFixed(2));
+      // Invalidate Redis balance cache so it pulls the new deducted amount from Postgres
+      await this.eventStream.invalidateUserBalance(userId);
 
       const transaction = await tx.transaction.create({
         data: {
