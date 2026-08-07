@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function RootLayout({
   children,
@@ -24,11 +25,14 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${outfit.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full bg-[#030712] font-sans text-slate-200 selection:bg-cyan-500/30">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="min-h-full bg-slate-50 dark:bg-[#030712] font-sans text-slate-900 dark:text-slate-200 selection:bg-cyan-500/30">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

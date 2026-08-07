@@ -27,6 +27,7 @@ interface TabulatorTableProps<T> {
   title?: string;
   showSearch?: boolean;
   showExport?: boolean;
+  customToolbar?: React.ReactNode;
 }
 
 // Wrapper for React formatter
@@ -93,6 +94,7 @@ export default function TabulatorClient<T>({
   title,
   showSearch = true,
   showExport = true,
+  customToolbar,
 }: TabulatorTableProps<T>) {
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -279,16 +281,24 @@ export default function TabulatorClient<T>({
     height: height,
     placeholder: "<div style='padding:2rem;color:#64748b;font-weight:500;text-align:center'>No records found</div>",
     paginationCounter: function (_pageSize: number, currentRow: number, _currentPage: number, totalRows: number) {
-      return `Showing ${currentRow}–${Math.min(currentRow + _pageSize - 1, totalRows)} of ${totalRows} records`;
+      if (totalRows === 0) return 'No records to display';
+      return `Showing ${currentRow} to ${Math.min(currentRow + _pageSize - 1, totalRows)} of ${totalRows} entries`;
     },
   };
 
   return (
     <div className="tabulator-premium-wrapper">
       {/* Toolbar: Search + Export */}
-      {(showSearch || showExport) && (
-        <div className="tabulator-toolbar">
-          {showSearch && (
+      {(showSearch || showExport || customToolbar) && (
+        <div className="tabulator-toolbar" style={{ justifyContent: customToolbar ? 'space-between' : 'flex-end' }}>
+          
+          {customToolbar && (
+            <div className="flex-1 flex items-center justify-start">
+              {customToolbar}
+            </div>
+          )}
+
+          {showSearch && !customToolbar && (
             <div className="tabulator-search">
               <span className="tabulator-search-icon"><SearchIcon /></span>
               <input
@@ -380,75 +390,120 @@ export default function TabulatorClient<T>({
       </div>
 
       <style jsx global>{`
+        :root {
+          --tab-bg: #ffffff;
+          --tab-border: #f1f5f9;
+          --tab-header-bg: #f1f5f9; /* Slightly darker grey for the pill header */
+          --tab-header-text: #475569;
+          --tab-row-bg: #ffffff;
+          --tab-row-alt-bg: #ffffff;
+          --tab-row-hover: #f8fafc;
+          --tab-text: #334155;
+          --tab-footer-bg: #ffffff;
+          --tab-input-bg: #ffffff;
+          --tab-input-border: #e2e8f0;
+          --tab-input-text: #0f172a;
+          --tab-btn-bg: transparent;
+          --tab-btn-hover: #f1f5f9;
+          --tab-active-bg: #0f172a;
+          --tab-active-text: #ffffff;
+          --tab-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .dark {
+          --tab-bg: #0f172a;
+          --tab-border: rgba(255, 255, 255, 0.05);
+          --tab-header-bg: #1e293b; /* Darker slate for header pill */
+          --tab-header-text: #cbd5e1;
+          --tab-row-bg: #0f172a;
+          --tab-row-alt-bg: #0f172a;
+          --tab-row-hover: #1e293b;
+          --tab-text: #e2e8f0;
+          --tab-footer-bg: #0f172a;
+          --tab-input-bg: #020617;
+          --tab-input-border: rgba(255, 255, 255, 0.1);
+          --tab-input-text: #f8fafc;
+          --tab-btn-bg: transparent;
+          --tab-btn-hover: #1e293b;
+          --tab-active-bg: #ffffff;
+          --tab-active-text: #0f172a;
+          --tab-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
         /* === WRAPPER === */
         .tabulator-premium-wrapper {
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 24px;
+          border: 1px solid var(--tab-border);
           overflow: hidden;
-          background: #0f172a; /* Solid deep background */
-          box-shadow:
-            0 10px 15px -3px rgba(0, 0, 0, 0.4),
-            0 4px 6px -2px rgba(0, 0, 0, 0.2);
+          background: var(--tab-bg);
+          box-shadow: var(--tab-shadow);
+          padding: 8px 0;
         }
 
         /* === TOOLBAR === */
         .tabulator-toolbar {
           display: flex;
           align-items: center;
+          justify-content: flex-end;
           gap: 16px;
-          padding: 24px 28px; /* High-end spacious padding */
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          background: #1e293b; 
+          padding: 16px 32px 24px;
+          background: var(--tab-bg); 
+          border-bottom: none;
         }
 
         /* Search */
         .tabulator-search {
-          flex: 1;
           position: relative;
           display: flex;
           align-items: center;
+          width: 320px;
         }
         .tabulator-search-icon {
           position: absolute;
-          left: 18px; /* Adjusted for larger input */
-          color: #64748b;
+          left: 16px;
+          color: #94a3b8;
           pointer-events: none;
           display: flex;
         }
         .tabulator-search-input {
           width: 100%;
-          height: 52px; /* Taller search input */
-          padding: 0 48px 0 52px;
-          background: #020617; 
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 12px;
-          color: #f8fafc;
-          font-size: 0.95rem;
+          height: 40px;
+          padding: 0 40px;
+          background: var(--tab-input-bg); 
+          border: 1px solid var(--tab-input-border);
+          border-radius: 9999px; /* Pill shape */
+          color: var(--tab-input-text);
+          font-size: 0.9rem;
           outline: none;
           transition: all 0.2s;
         }
         .tabulator-search-input::placeholder {
-          color: #475569;
+          color: #94a3b8;
+          font-weight: 400;
         }
         .tabulator-search-input:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          border-color: #cbd5e1;
+          box-shadow: 0 0 0 4px rgba(226, 232, 240, 0.4);
+        }
+        .dark .tabulator-search-input:focus {
+          border-color: #475569;
+          box-shadow: 0 0 0 4px rgba(71, 85, 105, 0.4);
         }
         .tabulator-search-clear {
           position: absolute;
-          right: 16px;
-          color: #64748b;
+          right: 12px;
+          color: #94a3b8;
           background: none;
           border: none;
           cursor: pointer;
           font-size: 0.85rem;
-          padding: 6px;
-          border-radius: 6px;
+          padding: 4px;
+          border-radius: 50%;
           transition: all 0.15s;
         }
         .tabulator-search-clear:hover {
-          color: #f1f5f9;
-          background: rgba(255, 255, 255, 0.1);
+          color: var(--tab-text);
+          background: var(--tab-border);
         }
 
         /* Export */
@@ -458,153 +513,210 @@ export default function TabulatorClient<T>({
         .tabulator-export-btn {
           display: flex;
           align-items: center;
-          gap: 10px;
-          height: 52px; /* Matches search height */
-          padding: 0 24px;
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          border-radius: 12px;
-          color: #93c5fd;
+          gap: 8px;
+          height: 40px;
+          padding: 0 20px;
+          background: var(--tab-bg);
+          border: 1px solid var(--tab-input-border);
+          border-radius: 9999px; /* Pill shape */
+          color: var(--tab-text);
           font-size: 0.9rem;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
         }
         .tabulator-export-btn:hover {
-          background: rgba(59, 130, 246, 0.18);
-          border-color: rgba(59, 130, 246, 0.35);
-          color: #bfdbfe;
+          background: var(--tab-btn-hover);
         }
         .tabulator-export-dropdown {
           position: absolute;
           right: 0;
-          top: calc(100% + 10px);
-          width: 260px;
-          background: #1e293b;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 14px;
+          top: calc(100% + 8px);
+          width: 240px;
+          background: var(--tab-bg);
+          border: 1px solid var(--tab-border);
+          border-radius: 12px;
           padding: 8px;
           z-index: 50;
-          box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
           animation: dropdownFadeIn 0.15s ease-out;
         }
         @keyframes dropdownFadeIn {
-          from { opacity: 0; transform: translateY(-6px); }
+          from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .tabulator-export-item {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
           width: 100%;
-          padding: 12px 16px;
+          padding: 10px 12px;
           background: none;
           border: none;
-          border-radius: 10px;
-          color: #e2e8f0;
+          border-radius: 8px;
+          color: var(--tab-text);
           cursor: pointer;
           text-align: left;
           transition: all 0.15s;
         }
         .tabulator-export-item:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--tab-row-hover);
         }
 
         /* === TABLE CORE === */
+        .tabulator-table-area {
+          padding: 0 12px;
+        }
+        
         .tabulator-table-area .tabulator {
           background-color: transparent !important;
           border: none !important;
           font-family: inherit !important;
-          font-size: 0.9rem !important;
+          font-size: 0.95rem !important;
           width: 100% !important;
         }
 
         /* Header */
         .tabulator-table-area .tabulator-header {
-          background-color: #020617 !important; 
-          border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-          color: #cbd5e1 !important;
-          font-weight: 700 !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.08em !important;
-          font-size: 0.75rem !important;
+          background-color: var(--tab-header-bg) !important; 
+          border-bottom: none !important;
+          color: var(--tab-header-text) !important;
+          font-weight: 500 !important;
+          text-transform: capitalize !important;
+          font-size: 0.85rem !important;
+          padding: 8px 12px !important;
+          border-radius: 12px !important;
+          margin-bottom: 8px !important;
         }
         .tabulator-table-area .tabulator-col {
           background-color: transparent !important;
-          border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+          border-right: none !important;
+        }
+        .tabulator-table-area .tabulator-col-title {
+          text-align: center !important;
+          width: 100% !important;
+          display: block !important;
         }
         .tabulator-table-area .tabulator-col-content {
-          padding: 20px 24px !important; /* Spacious header cells */
+          padding: 12px 24px !important;
+          text-align: center !important;
         }
 
         /* Rows */
         .tabulator-table-area .tabulator-row {
-          background-color: #0f172a !important; 
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-          min-height: 64px !important; /* Taller rows */
-          color: #f1f5f9 !important;
+          background-color: var(--tab-row-bg) !important; 
+          border-bottom: 1px solid var(--tab-border) !important;
+          min-height: 60px !important;
+          color: var(--tab-text) !important;
           transition: background-color 0.15s;
         }
         .tabulator-table-area .tabulator-row:nth-child(even) {
-          background-color: #1e293b !important; 
+          background-color: var(--tab-row-alt-bg) !important; 
         }
         .tabulator-table-area .tabulator-row.tabulator-selectable:hover {
-          background-color: #334155 !important; 
+          background-color: var(--tab-row-hover) !important; 
           cursor: pointer;
         }
         .tabulator-table-area .tabulator-cell {
-          padding: 16px 24px !important; /* Spacious row cells */
+          padding: 8px 20px !important;
           border-right: none !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-align: center !important;
+          height: 100% !important;
         }
 
         /* Footer / Pagination */
         .tabulator-table-area .tabulator-footer {
-          background-color: #020617 !important;
-          border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-          color: #94a3b8 !important;
-          padding: 16px 28px !important;
+          background-color: var(--tab-footer-bg) !important;
+          border-top: none !important;
+          color: var(--tab-header-text) !important;
+          padding: 24px 20px 16px !important;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
-        .tabulator-table-area .tabulator-page {
-          background: #1e293b !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          color: #f1f5f9 !important;
-          border-radius: 10px !important;
-          margin: 0 5px !important;
-          padding: 8px 16px !important;
-          font-weight: 600 !important;
-          transition: all 0.2s;
-        }
-        .tabulator-table-area .tabulator-page.active {
-          background: #3b82f6 !important;
-          border-color: #2563eb !important;
-          color: white !important;
-        }
-        .tabulator-table-area .tabulator-page:hover:not(.active) {
-          background: #334155 !important;
-          border-color: rgba(255, 255, 255, 0.2) !important;
+        .tabulator-table-area .tabulator-footer-contents {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
         }
         .tabulator-table-area .tabulator-paginator {
-          color: #e2e8f0 !important;
+          color: var(--tab-text) !important;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 6px;
+        }
+        .tabulator-table-area .tabulator-page {
+          background: transparent !important;
+          border: 1px solid transparent !important;
+          color: var(--tab-text) !important;
+          border-radius: 50% !important;
+          min-width: 32px !important;
+          height: 32px !important;
+          padding: 0 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-weight: 500 !important;
+          font-size: 0.85rem !important;
+          transition: all 0.2s;
+        }
+        .tabulator-table-area .tabulator-page[data-page="first"],
+        .tabulator-table-area .tabulator-page[data-page="prev"],
+        .tabulator-table-area .tabulator-page[data-page="next"],
+        .tabulator-table-area .tabulator-page[data-page="last"] {
+          border-radius: 9999px !important;
+          padding: 0 12px !important;
+          background: transparent !important;
+          color: var(--tab-header-text) !important;
+          font-weight: 400 !important;
+        }
+        
+        .tabulator-table-area .tabulator-page.active {
+          background: var(--tab-active-bg) !important;
+          color: var(--tab-active-text) !important;
+          font-weight: 600 !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        }
+        .tabulator-table-area .tabulator-page:hover:not(.active) {
+          background: var(--tab-btn-hover) !important;
+          color: var(--tab-text) !important;
+        }
+        .tabulator-table-area .tabulator-page:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+          background: transparent !important;
         }
         .tabulator-table-area .tabulator-page-size {
-          background: #1e293b !important;
-          border: 1px solid rgba(255, 255, 255, 0.15) !important;
-          color: #f8fafc !important;
-          border-radius: 10px !important;
-          padding: 8px 12px !important;
-          font-size: 0.9rem !important;
-          margin: 0 10px !important;
+          background: transparent !important;
+          border: 1px solid var(--tab-input-border) !important;
+          color: var(--tab-text) !important;
+          border-radius: 9999px !important;
+          padding: 4px 12px !important;
+          font-size: 0.85rem !important;
+          margin: 0 24px 0 12px !important;
           outline: none;
           cursor: pointer;
+          -webkit-appearance: none;
+          appearance: none;
+          text-align: center;
+        }
+        .tabulator-table-area .tabulator-page-size:hover {
+          background: var(--tab-btn-hover) !important;
         }
         .tabulator-table-area .tabulator-page-size:focus {
           border-color: #3b82f6 !important;
         }
         .tabulator-table-area .tabulator-pagination-counter {
-          color: #94a3b8 !important;
-          font-size: 0.9rem !important;
+          color: var(--tab-header-text) !important;
+          font-size: 0.85rem !important;
           font-weight: 500 !important;
+          margin-left: auto !important;
         }
       `}</style>
     </div>

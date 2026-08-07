@@ -112,35 +112,46 @@ export default function AdminWalletPage() {
     }
   };
 
-  return (
-    <>
-      <PageHeader
-        eyebrow="Finance"
-        title="Wallet requests"
-        description="Review and process user deposit and withdrawal requests."
-      />
-
-      {/* Global Filters */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-500">
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-              <path d="M14.5 14.5L18 18M8.5 15A6.5 6.5 0 108.5 2a6.5 6.5 0 000 13z" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+  const CustomWalletToolbar = (
+    <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pr-4">
+      
+      {/* Left: Tabs & Filters (Pill Group) */}
+      <div className="flex flex-wrap items-center gap-2 rounded-full bg-slate-50 p-1.5 shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900/50">
+        <button
+          type="button"
+          onClick={() => setTab('deposits')}
+          className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-all ${
+            tab === 'deposits'
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          Deposits
+          <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${tab === 'deposits' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-slate-200/50 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}>
+            {deposits.length}
           </span>
-          <input
-            type="text"
-            placeholder="Search by user mobile..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
-          />
-        </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('withdrawals')}
+          className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-all ${
+            tab === 'withdrawals'
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          Withdrawals
+          <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${tab === 'withdrawals' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-slate-200/50 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}>
+            {withdrawals.length}
+          </span>
+        </button>
+        
+        <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white focus:border-cyan-400/50 focus:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
+          className="rounded-full bg-transparent px-4 py-1.5 text-sm font-medium text-slate-600 outline-none hover:text-slate-900 dark:text-slate-300 dark:hover:text-white cursor-pointer"
         >
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
@@ -150,164 +161,159 @@ export default function AdminWalletPage() {
         </select>
       </div>
 
-      <div className="mb-6 flex gap-3">
-        <button
-          type="button"
-          onClick={() => setTab('deposits')}
-          className={`rounded-2xl px-5 py-2.5 text-sm font-bold transition-all ${
-            tab === 'deposits'
-              ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40'
-              : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          Deposits
-          <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs text-slate-300">
-            {deposits.length}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('withdrawals')}
-          className={`rounded-2xl px-5 py-2.5 text-sm font-bold transition-all ${
-            tab === 'withdrawals'
-              ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40'
-              : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          Withdrawals
-          <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs text-slate-300">
-            {withdrawals.length}
-          </span>
-        </button>
+      {/* Right: Search */}
+      <div className="relative w-full lg:w-80">
+        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+            <path d="M14.5 14.5L18 18M8.5 15A6.5 6.5 0 108.5 2a6.5 6.5 0 000 13z" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          placeholder="Search by user mobile..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-10 w-full rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white dark:focus:border-indigo-400 dark:focus:ring-indigo-400/10"
+        />
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Finance"
+        title="Wallet requests"
+        description="Review and process user deposit and withdrawal requests."
+      />
 
       {tab === 'deposits' && (
-        <SectionCard title="Deposit Requests" description="Approve or reject user deposits after verifying payment proof." noPadding>
-          <TabulatorTable
-            columns={[
-              { key: 'amount', label: 'Amount', width: '120', hozAlign: 'right' as const, sortable: true, render: (v: any) => `₹${Number(v).toLocaleString()}` },
-              {
-                key: 'status',
-                label: 'Status',
-                width: '160',
-                hozAlign: 'center' as const,
-                render: (v: any) => <Badge variant={STATUS_COLORS[v] || 'info'}>{v}</Badge>,
-              },
-              { key: 'user', label: 'User Mobile', width: '160', render: (_: any, row: any) => row.user?.mobile || '-' },
-              {
-                key: 'proofImageUrl',
-                label: 'Proof',
-                width: '100',
-                hozAlign: 'center' as const,
-                headerSort: false,
-                excludeFromExport: true,
-                render: (v: any, row: any) => v ? (
-                  <button 
-                    type="button" 
-                    onClick={(e) => { e.preventDefault(); setPreviewRequest(row); }}
-                    className="text-cyan-400 underline text-xs font-medium hover:text-cyan-300"
+        <TabulatorTable
+          columns={[
+            { key: 'amount', label: 'Amount', width: '120', hozAlign: 'right' as const, sortable: true, render: (v: any) => `₹${Number(v).toLocaleString()}` },
+            {
+              key: 'status',
+              label: 'Status',
+              width: '160',
+              hozAlign: 'center' as const,
+              render: (v: any) => <Badge variant={STATUS_COLORS[v] || 'info'}>{v}</Badge>,
+            },
+            { key: 'user', label: 'User Mobile', width: '160', render: (_: any, row: any) => row.user?.mobile || '-' },
+            {
+              key: 'proofImageUrl',
+              label: 'Proof',
+              width: '100',
+              hozAlign: 'center' as const,
+              headerSort: false,
+              excludeFromExport: true,
+              render: (v: any, row: any) => v ? (
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.preventDefault(); setPreviewRequest(row); }}
+                  className="text-cyan-600 underline text-xs font-semibold hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
+                >
+                  View Proof
+                </button>
+              ) : <span className="text-slate-400 text-xs">-</span>
+            },
+            {
+              key: 'createdAt',
+              label: 'Requested',
+              width: '160',
+              exportFormat: (v: any) => new Date(v).toLocaleString(),
+              render: (v: any) => new Date(v).toLocaleString(),
+            },
+            {
+              key: 'id',
+              label: 'Actions',
+              width: '200',
+              hozAlign: 'center' as const,
+              headerSort: false,
+              render: (_: any, d: any) => (d.status === 'PENDING' || d.status === 'WAITING_APPROVAL') ? (
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={processing === d.id}
+                    onClick={() => handleAction('deposit', d.id, 'approve')}
+                    className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30 disabled:opacity-50 transition-colors"
                   >
-                    View Proof
+                    Approve
                   </button>
-                ) : <span className="text-slate-500 text-xs">-</span>
-              },
-              {
-                key: 'createdAt',
-                label: 'Requested',
-                width: '160',
-                exportFormat: (v: any) => new Date(v).toLocaleString(),
-                render: (v: any) => new Date(v).toLocaleString(),
-              },
-              {
-                key: 'id',
-                label: 'Actions',
-                width: '200',
-                hozAlign: 'center' as const,
-                headerSort: false,
-                render: (_: any, d: any) => (d.status === 'PENDING' || d.status === 'WAITING_APPROVAL') ? (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={processing === d.id}
-                      onClick={() => handleAction('deposit', d.id, 'approve')}
-                      className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      disabled={processing === d.id}
-                      onClick={() => handleAction('deposit', d.id, 'reject')}
-                      className="rounded-lg bg-rose-500/20 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/30 disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                ) : <span className="text-slate-500 text-xs">Processed</span>
-              }
-            ]}
-            data={deposits}
-            loading={loading}
-            paginationSize={20}
-            title="Deposit_Requests"
-          />
-        </SectionCard>
+                  <button
+                    type="button"
+                    disabled={processing === d.id}
+                    onClick={() => handleAction('deposit', d.id, 'reject')}
+                    className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 hover:bg-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:hover:bg-rose-500/30 disabled:opacity-50 transition-colors"
+                  >
+                    Reject
+                  </button>
+                </div>
+              ) : <span className="text-slate-400 text-xs font-medium">Processed</span>
+            }
+          ]}
+          data={deposits}
+          loading={loading}
+          paginationSize={20}
+          title="Deposit_Requests"
+          showSearch={false}
+          customToolbar={CustomWalletToolbar}
+        />
       )}
 
       {tab === 'withdrawals' && (
-        <SectionCard title="Withdrawal Requests" description="Pay the user externally first, then mark as paid here." noPadding>
-          <TabulatorTable
-            columns={[
-              { key: 'amount', label: 'Amount', width: '120', hozAlign: 'right' as const, sortable: true, render: (v: any) => `₹${Number(v).toLocaleString()}` },
-              {
-                key: 'status',
-                label: 'Status',
-                width: '160',
-                hozAlign: 'center' as const,
-                render: (v: any) => <Badge variant={STATUS_COLORS[v] || 'info'}>{v}</Badge>,
-              },
-              { key: 'user', label: 'User Mobile', width: '160', render: (_: any, row: any) => row.user?.mobile || '-' },
-              { key: 'upiOrAccount', label: 'Payment Info', width: '220', render: (v: any) => <code className="text-xs text-slate-300">{v || '-'}</code> },
-              {
-                key: 'createdAt',
-                label: 'Requested',
-                width: '160',
-                render: (v: any) => new Date(v).toLocaleString(),
-              },
-              {
-                key: 'id',
-                label: 'Actions',
-                width: '200',
-                hozAlign: 'center' as const,
-                headerSort: false,
-                render: (_: any, w: any) => w.status === 'PENDING' ? (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={processing === w.id}
-                      onClick={() => handleAction('withdrawal', w.id, 'approve')}
-                      className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
-                    >
-                      Mark Paid
-                    </button>
-                    <button
-                      type="button"
-                      disabled={processing === w.id}
-                      onClick={() => handleAction('withdrawal', w.id, 'reject')}
-                      className="rounded-lg bg-rose-500/20 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/30 disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                ) : <span className="text-slate-500 text-xs">Processed</span>
-              }
-            ]}
-            data={withdrawals}
-            loading={loading}
-            paginationSize={20}
-            title="Withdrawal_Requests"
-          />
-        </SectionCard>
+        <TabulatorTable
+          columns={[
+            { key: 'amount', label: 'Amount', width: '120', hozAlign: 'right' as const, sortable: true, render: (v: any) => `₹${Number(v).toLocaleString()}` },
+            {
+              key: 'status',
+              label: 'Status',
+              width: '160',
+              hozAlign: 'center' as const,
+              render: (v: any) => <Badge variant={STATUS_COLORS[v] || 'info'}>{v}</Badge>,
+            },
+            { key: 'user', label: 'User Mobile', width: '160', render: (_: any, row: any) => row.user?.mobile || '-' },
+            { key: 'upiOrAccount', label: 'Payment Info', width: '220', render: (v: any) => <code className="text-xs text-slate-500 dark:text-slate-300 font-medium bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{v || '-'}</code> },
+            {
+              key: 'createdAt',
+              label: 'Requested',
+              width: '160',
+              render: (v: any) => new Date(v).toLocaleString(),
+            },
+            {
+              key: 'id',
+              label: 'Actions',
+              width: '200',
+              hozAlign: 'center' as const,
+              headerSort: false,
+              render: (_: any, w: any) => w.status === 'PENDING' ? (
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={processing === w.id}
+                    onClick={() => handleAction('withdrawal', w.id, 'approve')}
+                    className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30 disabled:opacity-50 transition-colors"
+                  >
+                    Mark Paid
+                  </button>
+                  <button
+                    type="button"
+                    disabled={processing === w.id}
+                    onClick={() => handleAction('withdrawal', w.id, 'reject')}
+                    className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 hover:bg-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:hover:bg-rose-500/30 disabled:opacity-50 transition-colors"
+                  >
+                    Reject
+                  </button>
+                </div>
+              ) : <span className="text-slate-400 text-xs font-medium">Processed</span>
+            }
+          ]}
+          data={withdrawals}
+          loading={loading}
+          paginationSize={20}
+          title="Withdrawal_Requests"
+          showSearch={false}
+          customToolbar={CustomWalletToolbar}
+        />
       )}
       <Modal
         isOpen={Boolean(previewRequest)}
@@ -317,15 +323,15 @@ export default function AdminWalletPage() {
       >
         {previewRequest && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-900/50 p-5 border border-white/5">
+            <div className="grid grid-cols-2 gap-4 rounded-[16px] bg-slate-50 dark:bg-slate-900/50 p-5 border border-slate-200 dark:border-slate-800">
               <div>
                 <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">Requested Amount</p>
-                <p className="text-2xl font-bold text-white mt-1">₹{previewRequest.amount.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">₹{previewRequest.amount.toLocaleString()}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">User Mobile</p>
-                <p className="text-lg font-bold text-white mt-1">{previewRequest.user?.mobile || '-'}</p>
-                <p className="text-xs text-slate-400 mt-0.5">Current Bal: ₹{previewRequest.user?.balance.toLocaleString()}</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{previewRequest.user?.mobile || '-'}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Current Bal: ₹{previewRequest.user?.balance.toLocaleString()}</p>
               </div>
             </div>
             
@@ -346,7 +352,7 @@ export default function AdminWalletPage() {
                      handleAction('deposit', previewRequest.id, 'approve');
                      setPreviewRequest(null);
                   }}
-                  className="flex-1 rounded-xl bg-emerald-500/20 py-3.5 text-sm font-bold text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-emerald-100 py-3.5 text-sm font-bold text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
                 >
                   {processing === previewRequest.id ? 'Processing...' : 'Approve Deposit'}
                 </button>
@@ -356,7 +362,7 @@ export default function AdminWalletPage() {
                   onClick={() => {
                      handleAction('deposit', previewRequest.id, 'reject');
                   }}
-                  className="flex-1 rounded-xl bg-rose-500/20 py-3.5 text-sm font-bold text-rose-400 hover:bg-rose-500/30 transition-colors disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-rose-100 py-3.5 text-sm font-bold text-rose-700 hover:bg-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/30 transition-colors disabled:opacity-50"
                 >
                   Reject
                 </button>
@@ -375,18 +381,18 @@ export default function AdminWalletPage() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Remark / Reason</label>
-            <textarea
-              value={rejectionRemark}
-              onChange={(e) => setRejectionRemark(e.target.value)}
-              placeholder="e.g. Invalid proof, Payment not received, Incorrect account details..."
-              className="w-full h-24 rounded-xl bg-slate-900 border border-white/10 p-4 text-sm text-white focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all"
-            />
+              <textarea
+                value={rejectionRemark}
+                onChange={(e) => setRejectionRemark(e.target.value)}
+                placeholder="e.g. Invalid proof, Payment not received, Incorrect account details..."
+                className="w-full h-24 rounded-[16px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 text-sm text-slate-900 dark:text-white focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all placeholder:text-slate-400"
+              />
           </div>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => { setRejectionModal(null); setRejectionRemark(''); }}
-              className="flex-1 rounded-xl bg-white/5 py-3 text-sm font-bold text-slate-400 hover:bg-white/10 transition-colors"
+              className="flex-1 rounded-[16px] bg-slate-100 dark:bg-slate-800 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Cancel
             </button>
@@ -399,13 +405,13 @@ export default function AdminWalletPage() {
                   setPreviewRequest(null);
                 }
               }}
-              className="flex-2 rounded-xl bg-rose-500 py-3 text-sm font-bold text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20 disabled:opacity-50"
+              className="flex-2 rounded-[16px] bg-rose-500 py-3 text-sm font-bold text-white hover:bg-rose-600 transition-colors shadow-[0_4px_12px_rgba(244,63,94,0.3)] disabled:opacity-50"
             >
               {processing ? 'Processing...' : 'Confirm Rejection'}
             </button>
           </div>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }

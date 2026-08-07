@@ -11,6 +11,7 @@ import { apiService } from '@/lib/api/api-service';
 import { BetStats, GameRound } from '@/types';
 import { FloorHeatmap } from '@/components/admin/dashboard/FloorHeatmap';
 import { io } from 'socket.io-client';
+import { cn } from "../../../lib/utils";
 
 /**
  * Modernized Admin Dashboard Page
@@ -65,7 +66,7 @@ export default function DashboardPage() {
     const interval = setInterval(fetchData, 10000); // 10s refresh for REST stats
     
     // Setup Admin WebSockets
-    const backendUrl = process.env.NEXT_PUBLIC_WS_URL || '';
+    const backendUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000';
     const socket = io(backendUrl, {
       transports: ['websocket'],
     });
@@ -122,39 +123,45 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="House Engine"
-        title="Real-time Operations"
-        description="Automated 60-second round monitoring and profitability analytics."
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <KPIWidget stats={kpiStats} loading={loading} />
-        <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
+    <div className={cn('space-y-8', 'pb-12')}>
+      <div>
+        <h1 className={cn('text-[32px]', 'font-black', 'text-slate-900', 'dark:text-white', 'tracking-normal')}>
+          Hello Admin
+        </h1>
+        <p className={cn('text-sm', 'font-medium', 'text-slate-500', 'dark:text-slate-400', 'mt-1')}>
+          Monitor performance and operations in real time.
+        </p>
       </div>
 
-      <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
+      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-4')}>
+        <KPIWidget stats={kpiStats} loading={loading} />
+        <div className="col-span-1">
+          <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
+        </div>
+      </div>
 
-      <ProfitableOpenings />
+      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-2')}>
+        <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
+        <ProfitableOpenings />
+      </div>
 
-      <div className="mt-8 rounded-3xl border border-white/5 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-md">
-        <h3 className="text-xl font-bold text-white mb-4">Platform Health</h3>
+      {/* <div className="mt-8 rounded-[24px] bg-white dark:bg-slate-900/40 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-xl transition-colors">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Platform Health</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <HealthMetric label="Aggregation Engine" status="Optimal" />
           <HealthMetric label="WebSocket Gateway" status="Connected" />
           <HealthMetric label="TimescaleDB Latency" status="< 2ms" />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
 
 function HealthMetric({ label, status }: { label: string; status: string }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-white/5 p-5 border border-white/5">
-      <span className="text-slate-400 font-medium">{label}</span>
-      <span className="text-emerald-400 font-bold uppercase tracking-widest text-[10px] bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+    <div className="flex items-center justify-between rounded-[20px] bg-[#f4f7fe] dark:bg-slate-800/50 p-5">
+      <span className="text-slate-600 dark:text-slate-400 font-bold">{label}</span>
+      <span className="text-emerald-600 dark:text-emerald-400 font-bold tracking-widest text-xs bg-emerald-100 dark:bg-emerald-500/10 px-4 py-1.5 rounded-full">
         {status}
       </span>
     </div>

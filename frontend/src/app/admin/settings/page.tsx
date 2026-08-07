@@ -12,6 +12,7 @@ import {
 } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
 import { AdminSettings } from '@/types';
+import { cn } from "../../../lib/utils";
 
 type AlertState = {
   title: string;
@@ -98,8 +99,11 @@ export default function SettingsPage() {
 
   if (loading || !settings) {
     return (
-      <div className="glass-panel flex min-h-[320px] items-center justify-center rounded-3xl">
-        <div className="animate-spin h-8 w-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
+      <div className={cn('flex', 'min-h-[400px]', 'items-center', 'justify-center', 'rounded-3xl', 'bg-white/50', 'dark:bg-slate-900/20', 'backdrop-blur-md')}>
+        <div className={cn('flex', 'flex-col', 'items-center', 'gap-4')}>
+          <div className={cn('animate-spin', 'h-10', 'w-10', 'border-4', 'border-indigo-500', 'border-t-transparent', 'rounded-full', 'shadow-[0_0_15px_rgba(99,102,241,0.5)]')} />
+          <p className={cn('text-slate-500', 'dark:text-slate-400', 'font-bold', 'tracking-wide', 'animate-pulse')}>Loading Configurations...</p>
+        </div>
       </div>
     );
   }
@@ -117,62 +121,54 @@ export default function SettingsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="Round Configuration">
-          <div className="space-y-4 pt-2">
+      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-2', 'max-w-7xl')}>
+        <SectionCard title="Round Configuration" description="Manage the global timer for all automated bets.">
+          <div className={cn('space-y-4', 'pt-2')}>
             <Input
               label="Round duration (seconds)"
               type="number"
               value={settings.roundDuration}
               onChange={(e) => setSettings({ ...settings, roundDuration: Number(e.target.value) })}
             />
-            <p className="text-xs text-slate-500 italic">Default: 60s as per production spec.</p>
+         
           </div>
         </SectionCard>
 
-        <SectionCard title="House Profit Guarantee">
-          <div className="space-y-4 pt-2">
+        <SectionCard title="House Edge Guarantee" description="Ensure platform profitability automatically.">
+          <div className={cn('space-y-6', 'pt-2')}>
             <div>
-              <label className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-3">
-                House profit %
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  id="house-profit-slider"
-                  type="range"
-                  min={1}
-                  max={30}
-                  step={0.5}
-                  value={Number(settings.houseProfitPercent ?? 5)}
-                  onChange={(e) => setSettings({ ...settings, houseProfitPercent: Number(e.target.value) } as any)}
-                  className="flex-1 h-2 rounded-full appearance-none bg-gradient-to-r from-cyan-500 to-blue-600 accent-cyan-400 cursor-pointer"
-                />
-                <span className="text-2xl font-bold text-cyan-400 min-w-[4ch] text-right">
+              <div className={cn('flex', 'items-center', 'justify-between', 'mb-4')}>
+                <label className={cn('text-sm', 'font-bold', 'text-slate-700', 'dark:text-slate-300')}>
+                  Minimum House Profit %
+                </label>
+                <span className={cn('px-3', 'py-1', 'bg-indigo-50', 'dark:bg-indigo-500/10', 'text-indigo-600', 'dark:text-indigo-400', 'font-black', 'rounded-lg', 'text-lg', 'border', 'border-indigo-100', 'dark:border-indigo-500/20', 'shadow-sm')}>
                   {Number(settings.houseProfitPercent ?? 5).toFixed(1)}%
                 </span>
               </div>
-            </div>
-            <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-2 text-sm">
-              <p className="text-slate-300">
-                <span className="font-semibold text-white">How it works:</span> Every round, the engine guarantees the house keeps at least this percentage of the total stake before distributing winnings.
-              </p>
-              <p className="text-slate-400 text-xs">
-                Example at <span className="text-cyan-400 font-semibold">{Number(settings.houseProfitPercent ?? 5).toFixed(1)}%</span>: On a ₹5,000 stake round, the house keeps ≥ <span className="text-emerald-400 font-semibold">₹{(5000 * Number(settings.houseProfitPercent ?? 5) / 100).toFixed(0)}</span>, and the payout pool is capped at <span className="text-yellow-400 font-semibold">₹{(5000 * (1 - Number(settings.houseProfitPercent ?? 5) / 100)).toFixed(0)}</span>.
-              </p>
+              <input
+                id="house-profit-slider"
+                type="range"
+                min={1}
+                max={30}
+                step={0.5}
+                value={Number(settings.houseProfitPercent ?? 5)}
+                onChange={(e) => setSettings({ ...settings, houseProfitPercent: Number(e.target.value) } as any)}
+                className={cn('w-full', 'h-2.5', 'rounded-full', 'appearance-none', 'bg-slate-200', 'dark:bg-slate-700', 'accent-indigo-500', 'cursor-pointer')}
+              />
             </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Betting Limits">
-          <div className="grid grid-cols-2 gap-4 pt-2">
+        <SectionCard title="Betting Limits" description="Restrict minimum and maximum betting amounts per floor.">
+          <div className={cn('grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-4', 'sm:gap-6', 'pt-2')}>
             <Input
-              label="Min (₹)"
+              label="Minimum Bet (₹)"
               type="number"
               value={settings.minBetAmount}
               onChange={(e) => setSettings({ ...settings, minBetAmount: Number(e.target.value) })}
             />
             <Input
-              label="Max (₹)"
+              label="Maximum Bet (₹)"
               type="number"
               value={settings.maxBetAmount}
               onChange={(e) => setSettings({ ...settings, maxBetAmount: Number(e.target.value) })}
@@ -180,60 +176,83 @@ export default function SettingsPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="System Availability">
-          <ToggleRow
-            title="Maintenance Mode"
-            description="Disable all betting activity immediately."
-            checked={settings.maintenanceMode}
-            onChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
-          />
+        <SectionCard title="System Availability" description="Emergency controls for the platform.">
+          <div className="pt-2">
+            <ToggleRow
+              title="Maintenance Mode"
+              description="Immediately disable all betting activity across the platform."
+              checked={settings.maintenanceMode}
+              onChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
+            />
+          </div>
         </SectionCard>
         
-        <SectionCard title="Bank & Deposit Details">
-          <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-            <Input
-              label="Bank Account Name"
-              value={settings.bankAccountName || ''}
-              onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
-            />
-            <Input
-              label="Account Number"
-              value={settings.bankAccountNumber || ''}
-              onChange={(e) => setSettings({ ...settings, bankAccountNumber: e.target.value })}
-            />
-            <Input
-              label="IFSC Code"
-              value={settings.bankIfscCode || ''}
-              onChange={(e) => setSettings({ ...settings, bankIfscCode: e.target.value })}
-            />
-            <Input
-              label="UPI ID"
-              value={settings.upiId || ''}
-              onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
-            />
-          </div>
-          <div className="mt-4">
-            <TextArea
-              label="Payment Instructions"
-              value={settings.paymentInstructions || ''}
-              onChange={(e) => setSettings({ ...settings, paymentInstructions: e.target.value })}
-            />
-          </div>
-          <div className="mt-4 p-4 rounded-xl border border-white/5 bg-slate-900/50">
-             <label className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-4">Payment QR Code</label>
-             <div className="flex gap-6 items-center">
-               {settings.qrCodeUrl ? (
-                 <img src={`${apiService.getApiBase()}${settings.qrCodeUrl}`} className="h-24 w-24 rounded-lg object-contain bg-white p-1" />
-               ) : (
-                 <div className="h-24 w-24 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 text-xs border border-dashed border-slate-600">No QR</div>
-               )}
-               <input 
-                 type="file" 
-                 accept="image/*"
-                 onChange={handleQrUpload}
-                 className="text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:transition-all cursor-pointer"
-               />
-             </div>
+        <SectionCard title="Bank & Deposit Details" description="Configure the payment information displayed to users." className="lg:col-span-2">
+          <div className={cn('grid', 'grid-cols-1', 'gap-6', 'pt-2', 'lg:grid-cols-2')}>
+            
+            {/* Left Column: Bank Inputs */}
+            <div className="space-y-5">
+              <Input
+                label="Bank Account Name"
+                value={settings.bankAccountName || ''}
+                onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
+              />
+              <Input
+                label="Account Number"
+                value={settings.bankAccountNumber || ''}
+                onChange={(e) => setSettings({ ...settings, bankAccountNumber: e.target.value })}
+              />
+              <Input
+                label="IFSC Code"
+                value={settings.bankIfscCode || ''}
+                onChange={(e) => setSettings({ ...settings, bankIfscCode: e.target.value })}
+              />
+              <Input
+                label="UPI ID"
+                value={settings.upiId || ''}
+                onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
+              />
+            </div>
+
+            {/* Right Column: QR and Instructions */}
+            <div className="space-y-6">
+              <TextArea
+                label="Payment Instructions"
+                value={settings.paymentInstructions || ''}
+                onChange={(e) => setSettings({ ...settings, paymentInstructions: e.target.value })}
+                className="h-32"
+              />
+              
+              <div className={cn('p-5', 'rounded-xl', 'border', 'border-slate-200', 'dark:border-slate-700/50', 'bg-slate-50', 'dark:bg-slate-800/30')}>
+                 <label className={cn('text-xs', 'font-bold', 'uppercase', 'tracking-widest', 'text-slate-500', 'mb-4', 'block')}>Payment QR Code</label>
+                 <div className={cn('flex', 'flex-col', 'sm:flex-row', 'gap-6', 'items-center')}>
+                   {settings.qrCodeUrl ? (
+                     <div className={cn('relative', 'group')}>
+                       <img 
+                         src={`${apiService.getApiBase()}${settings.qrCodeUrl}`} 
+                         alt="QR Code" 
+                         className={cn('h-32', 'w-32', 'rounded-xl', 'object-contain', 'bg-white', 'p-2', 'shadow-sm', 'border', 'border-slate-200', 'dark:border-transparent')} 
+                       />
+                     </div>
+                   ) : (
+                     <div className={cn('h-32', 'w-32', 'rounded-xl', 'bg-slate-100', 'dark:bg-slate-800/80', 'flex', 'flex-col', 'items-center', 'justify-center', 'text-slate-400', 'text-xs', 'border-2', 'border-dashed', 'border-slate-300', 'dark:border-slate-600')}>
+                       <span className={cn('text-2xl', 'mb-1')}>📷</span>
+                       No QR Uploaded
+                     </div>
+                   )}
+                   
+                   <div className={cn('flex-1', 'w-full', 'sm:w-auto')}>
+                     <p className={cn('text-sm', 'text-slate-500', 'mb-3', 'hidden', 'sm:block')}>Upload a valid UPI QR code for users to scan during deposits. Square aspect ratios work best.</p>
+                     <input 
+                       type="file" 
+                       accept="image/*"
+                       onChange={handleQrUpload}
+                       className={cn('block', 'w-full', 'text-sm', 'text-slate-500', 'file:mr-4', 'file:py-2.5', 'file:px-5', 'file:rounded-xl', 'file:border-0', 'file:text-sm', 'file:font-bold', 'file:bg-indigo-50', 'file:text-indigo-600', 'hover:file:bg-indigo-100', 'dark:file:bg-indigo-500/10', 'dark:file:text-indigo-400', 'dark:hover:file:bg-indigo-500/20', 'file:transition-colors', 'cursor-pointer', 'outline-none')}
+                     />
+                   </div>
+                 </div>
+              </div>
+            </div>
           </div>
         </SectionCard>
       </div>
@@ -244,7 +263,7 @@ export default function SettingsPage() {
         title={alertState?.title || ''}
         description={alertState?.description}
         footer={
-          <div className="flex justify-end">
+          <div className={cn('flex', 'justify-end')}>
             <Button variant={alertState?.tone === 'danger' ? 'danger' : 'primary'} onClick={() => setAlertState(null)}>
               Close
             </Button>
@@ -267,22 +286,24 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+    <div className={cn('flex', 'items-center', 'justify-between', 'gap-4', 'rounded-2xl', 'border', 'border-rose-100', 'dark:border-rose-900/30', 'bg-rose-50/50', 'dark:bg-rose-950/20', 'p-5', 'transition-all')}>
       <div>
-        <p className="text-sm font-semibold text-white">{title}</p>
-        {description ? <p className="text-sm text-slate-400">{description}</p> : null}
+        <p className={cn('text-sm', 'font-bold', 'text-slate-900', 'dark:text-slate-100')}>{title}</p>
+        {description ? <p className={cn('text-sm', 'text-slate-500', 'dark:text-slate-400', 'mt-1', 'leading-relaxed')}>{description}</p> : null}
       </div>
       <button
         type="button"
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-8 w-14 rounded-full border transition-all duration-300 ${
-          checked ? 'border-cyan-400/50 bg-cyan-500/20 shadow-[0_0_12px_rgba(34,211,238,0.3)]' : 'border-white/10 bg-white/5 hover:bg-white/10'
+        className={`relative h-8 w-14 flex-shrink-0 rounded-full border-2 transition-all duration-300 ${
+          checked 
+            ? 'border-rose-500 bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]' 
+            : 'border-slate-300 dark:border-slate-600 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'
         }`}
       >
         <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-            checked ? 'left-8' : 'left-1'
+          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all duration-300 ${
+            checked ? 'left-6' : 'left-0.5'
           }`}
         />
       </button>

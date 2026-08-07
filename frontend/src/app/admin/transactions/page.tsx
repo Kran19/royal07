@@ -53,6 +53,52 @@ export default function TransactionsPage() {
     }
   };
 
+  const CustomTransactionsToolbar = (
+    <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between pr-4">
+      {/* Left: Inline Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={filters.type}
+          onChange={(e) => setFilters((current) => ({ ...current, type: e.target.value }))}
+          className="h-10 rounded-full border border-slate-200 bg-white px-4 pr-8 text-sm font-semibold text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200"
+        >
+          <option value="">All Types</option>
+          <option value={TransactionType.DEPOSIT}>Deposit</option>
+          <option value={TransactionType.WITHDRAWAL}>Withdrawal</option>
+          <option value={TransactionType.BET_PLACED}>Bet Placed</option>
+          <option value={TransactionType.BET_WON}>Bet Won</option>
+        </select>
+        
+        <select
+          value={filters.status}
+          onChange={(e) => setFilters((current) => ({ ...current, status: e.target.value }))}
+          className="h-10 rounded-full border border-slate-200 bg-white px-4 pr-8 text-sm font-semibold text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200"
+        >
+          <option value="">All Statuses</option>
+          <option value={TransactionStatus.COMPLETED}>Completed</option>
+          <option value={TransactionStatus.PENDING}>Pending</option>
+          <option value={TransactionStatus.FAILED}>Failed</option>
+        </select>
+      </div>
+
+      {/* Right: Search Bar */}
+      <div className="relative w-full lg:max-w-md">
+        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+            <path d="M14.5 14.5L18 18M8.5 15A6.5 6.5 0 108.5 2a6.5 6.5 0 000 13z" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          placeholder="Search by ID or User Mobile..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-10 w-full rounded-full border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <>
       <PageHeader
@@ -61,33 +107,7 @@ export default function TransactionsPage() {
         description="Monitor financial flows across the platform."
       />
 
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-500">
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-              <path d="M14.5 14.5L18 18M8.5 15A6.5 6.5 0 108.5 2a6.5 6.5 0 000 13z" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            placeholder="Search by ID or User Mobile..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
-          />
-        </div>
-        <button
-          onClick={() => setFilterOpen(true)}
-          className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-          </svg>
-          Filters
-        </button>
-      </div>
-
-      <SectionCard title="All transactions" description="Chronological record of credits and debits with pagination." noPadding>
+      <div className="mt-2">
         <TabulatorTable
           columns={[
             {
@@ -158,34 +178,9 @@ export default function TransactionsPage() {
           loading={loading}
           paginationSize={20}
           title="Transactions"
+          customToolbar={CustomTransactionsToolbar}
         />
-      </SectionCard>
-
-      <FilterPanel isOpen={filterOpen} onClose={() => setFilterOpen(false)} title="Filter transactions">
-        <div className="space-y-4">
-          <Select
-            label="Type"
-            options={[
-              { value: TransactionType.DEPOSIT, label: 'Deposit' },
-              { value: TransactionType.WITHDRAWAL, label: 'Withdrawal' },
-              { value: TransactionType.BET_PLACED, label: 'Bet placed' },
-              { value: TransactionType.BET_WON, label: 'Bet won' },
-            ]}
-            value={filters.type}
-            onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}
-          />
-          <Select
-            label="Status"
-            options={[
-              { value: TransactionStatus.COMPLETED, label: 'Completed' },
-              { value: TransactionStatus.PENDING, label: 'Pending' },
-              { value: TransactionStatus.FAILED, label: 'Failed' },
-            ]}
-            value={filters.status}
-            onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
-          />
-        </div>
-      </FilterPanel>
+      </div>
     </>
   );
 }

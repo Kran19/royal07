@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StatCard, Badge, PageHeader, SectionCard, TabulatorTable } from '@/components/admin/common';
 import { apiService } from '@/lib/api/api-service';
 import { BetStats, GameRound } from '@/types';
+import { cn } from "../../../lib/utils";
 
 export default function MonitoringPage() {
   const [stats, setStats] = useState<BetStats | null>(null);
@@ -86,10 +87,10 @@ export default function MonitoringPage() {
         eyebrow="Realtime"
         title="Operations monitor"
         description="Live view of platform profitability and round-by-round performance."
-        actions={<Badge variant="cyan" className="animate-pulse">Live Link Active</Badge>}
+        // actions={<Badge variant="cyan" className="animate-pulse">Live Link Active</Badge>}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-3')}>
         <StatCard title="Total Stake" value={loading ? '...' : `₹${stats?.totalStake.toLocaleString()}`} icon="₹" loading={loading} />
         <StatCard title="Total Bets" value={loading ? '...' : stats?.totalBets || 0} icon="B" loading={loading} />
         <StatCard title="Unique Users" value={loading ? '...' : stats?.uniqueUsers || 0} icon="U" loading={loading} />

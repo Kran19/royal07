@@ -14,7 +14,7 @@ function FieldWrapper({
   return (
     <div className="w-full space-y-2.5">
       {label ? (
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+        <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
           {label}
         </label>
       ) : null}
@@ -33,7 +33,7 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
   return (
     <FieldWrapper label={label} error={error}>
       <input
-        className={`min-h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white placeholder:text-slate-500 focus:bg-[#030712] focus:border-cyan-400/50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
+        className={`min-h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 px-4 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#030712] focus:border-indigo-500/50 dark:focus:border-indigo-400/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
         {...props}
       />
     </FieldWrapper>
@@ -56,7 +56,7 @@ export function Select({
   return (
     <FieldWrapper label={label} error={error}>
       <select
-        className={`min-h-12 w-full appearance-none rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-medium text-white focus:border-cyan-400/50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
+        className={`min-h-12 w-full appearance-none rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-[#030712] focus:border-indigo-500/50 dark:focus:border-indigo-400/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
         {...props}
       >
         <option value="">Select an option</option>
@@ -79,7 +79,7 @@ export function TextArea({ label, error, className = '', ...props }: TextAreaPro
   return (
     <FieldWrapper label={label} error={error}>
       <textarea
-        className={`min-h-[120px] w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-medium text-white placeholder:text-slate-500 focus:bg-[#030712] focus:border-cyan-400/50 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
+        className={`min-h-[120px] w-full rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 p-4 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#030712] focus:border-indigo-500/50 dark:focus:border-indigo-400/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/10 ${error ? 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/10' : ''} ${className}`}
         {...props}
       />
     </FieldWrapper>
