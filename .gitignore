@@ -102,3 +102,6 @@ fix_schema.sql
 backend/uploads/
 frontend/public/uploads/
 **/uploads/
+
+
+.ai-memory

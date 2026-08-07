@@ -9,7 +9,10 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install all dependencies (NestJS CLI, TS, etc.)
-RUN npm ci
+RUN npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retries 5 && \
+    npm ci
 
 # Copy source code
 COPY . .

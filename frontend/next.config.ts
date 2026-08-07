@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
         destination: `${internalBackendUrl}/game/:path*`,
       },
       {
+        source: '/socket.io',
+        destination: `${internalBackendUrl}/socket.io`,
+      },
+      {
         source: '/socket.io/:path*',
         destination: `${internalBackendUrl}/socket.io/:path*`,
       }
