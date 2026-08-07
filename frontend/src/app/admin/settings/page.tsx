@@ -130,6 +130,39 @@ export default function SettingsPage() {
           </div>
         </SectionCard>
 
+        <SectionCard title="House Profit Guarantee">
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="text-xs uppercase tracking-wider text-slate-500 font-bold block mb-3">
+                House profit %
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  id="house-profit-slider"
+                  type="range"
+                  min={1}
+                  max={30}
+                  step={0.5}
+                  value={Number(settings.houseProfitPercent ?? 5)}
+                  onChange={(e) => setSettings({ ...settings, houseProfitPercent: Number(e.target.value) } as any)}
+                  className="flex-1 h-2 rounded-full appearance-none bg-gradient-to-r from-cyan-500 to-blue-600 accent-cyan-400 cursor-pointer"
+                />
+                <span className="text-2xl font-bold text-cyan-400 min-w-[4ch] text-right">
+                  {Number(settings.houseProfitPercent ?? 5).toFixed(1)}%
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-2 text-sm">
+              <p className="text-slate-300">
+                <span className="font-semibold text-white">How it works:</span> Every round, the engine guarantees the house keeps at least this percentage of the total stake before distributing winnings.
+              </p>
+              <p className="text-slate-400 text-xs">
+                Example at <span className="text-cyan-400 font-semibold">{Number(settings.houseProfitPercent ?? 5).toFixed(1)}%</span>: On a ₹5,000 stake round, the house keeps ≥ <span className="text-emerald-400 font-semibold">₹{(5000 * Number(settings.houseProfitPercent ?? 5) / 100).toFixed(0)}</span>, and the payout pool is capped at <span className="text-yellow-400 font-semibold">₹{(5000 * (1 - Number(settings.houseProfitPercent ?? 5) / 100)).toFixed(0)}</span>.
+              </p>
+            </div>
+          </div>
+        </SectionCard>
+
         <SectionCard title="Betting Limits">
           <div className="grid grid-cols-2 gap-4 pt-2">
             <Input

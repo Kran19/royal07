@@ -21,6 +21,10 @@ export default function DashboardPage() {
   const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+  const [roundStake, setRoundStake] = useState<number>(0);
+  const [roundProfit, setRoundProfit] = useState<number>(0);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -33,7 +37,22 @@ export default function DashboardPage() {
           setStats(statsRes.data);
         }
         if (roundRes.success && roundRes.data) {
-          setCurrentRound(roundRes.data);
+          const round = roundRes.data;
+          setCurrentRound(round);
+          
+          setCurrentRoundId(prevId => {
+            if (round.status === 'ACTIVE') {
+              if (round.id !== prevId) {
+                setRoundStake(0);
+                setRoundProfit(0);
+                return round.id;
+              }
+            } else {
+              setRoundStake(round.totalStake);
+              setRoundProfit(round.houseProfit);
+            }
+            return round.id; // Always keep the active round ID in state
+          });
         }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -55,6 +74,7 @@ export default function DashboardPage() {
     const onLiveBets = (data: { floorExposure: number[], totalStake: number, roundId: string }) => {
       setLiveExposure(data.floorExposure);
       setLiveTotalStake(data.totalStake);
+      setRoundStake(data.totalStake);
     };
 
     const onRoundSettled = (data: { totalStake: number, totalPayout: number, houseProfit: number }) => {
@@ -66,6 +86,10 @@ export default function DashboardPage() {
           profitLossToday: prev.profitLossToday + data.houseProfit
         };
       });
+      // Update round stats
+      setRoundStake(data.totalStake);
+      setRoundProfit(data.houseProfit);
+
       // Reset live exposure after settled
       setLiveExposure(new Array(12).fill(0));
       setLiveTotalStake(0);
@@ -80,7 +104,7 @@ export default function DashboardPage() {
       socket.off('admin_live_bets', onLiveBets);
       socket.off('admin_round_settled', onRoundSettled);
     };
-  }, []);
+  }, [currentRoundId]);
 
   const [liveExposure, setLiveExposure] = useState<number[]>(new Array(12).fill(0));
   const [liveTotalStake, setLiveTotalStake] = useState<number>(0);
@@ -90,9 +114,9 @@ export default function DashboardPage() {
     totalUsers: stats?.uniqueUsers || 0,
     activeUsers: stats?.uniqueUsers || 0,
     totalBetsToday: stats?.totalBets || 0,
-    totalStakeToday: liveTotalStake > 0 ? liveTotalStake : (stats?.totalStake || 0),
+    totalStakeToday: roundStake,
     totalPayoutToday: stats?.totalPayoutToday || 0, // Using locally updated stats
-    profitLossToday: stats?.profitLossToday || 0,
+    profitLossToday: roundProfit,
     totalDeposits: 0,
     totalWithdrawals: 0,
   };

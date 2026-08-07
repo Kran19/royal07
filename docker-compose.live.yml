@@ -94,6 +94,24 @@ services:
     networks:
       - royalbet_live_network
 
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: royalbet_nginx_live
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # SSL Certificates (managed by Certbot on host)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - royalbet_live_network
+
 volumes:
   postgres_data_live:
   redis_data_live:

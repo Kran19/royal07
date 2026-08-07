@@ -20,7 +20,8 @@ export class SettingsService {
           roundDuration: 30,
           minBetAmount: 10,
           maxBetAmount: 100000,
-          maintenanceMode: false
+          maintenanceMode: false,
+          houseProfitPercent: 5,
         }
       });
     }
@@ -35,15 +36,16 @@ export class SettingsService {
     const updated = await this.prisma.adminSettings.update({
       where: { id: this.SETTINGS_ID },
       data: {
-        roundDuration: data.roundDuration !== undefined ? data.roundDuration : undefined,
-        minBetAmount: data.minBetAmount !== undefined ? data.minBetAmount : undefined,
-        maxBetAmount: data.maxBetAmount !== undefined ? data.maxBetAmount : undefined,
-        maintenanceMode: data.maintenanceMode !== undefined ? data.maintenanceMode : undefined,
-        bankAccountName: data.bankAccountName !== undefined ? data.bankAccountName : undefined,
-        bankAccountNumber: data.bankAccountNumber !== undefined ? data.bankAccountNumber : undefined,
-        bankIfscCode: data.bankIfscCode !== undefined ? data.bankIfscCode : undefined,
-        upiId: data.upiId !== undefined ? data.upiId : undefined,
-        qrCodeUrl: data.qrCodeUrl !== undefined ? data.qrCodeUrl : undefined,
+        roundDuration:       data.roundDuration !== undefined       ? data.roundDuration       : undefined,
+        minBetAmount:        data.minBetAmount !== undefined        ? data.minBetAmount        : undefined,
+        maxBetAmount:        data.maxBetAmount !== undefined        ? data.maxBetAmount        : undefined,
+        maintenanceMode:     data.maintenanceMode !== undefined     ? data.maintenanceMode     : undefined,
+        houseProfitPercent:  data.houseProfitPercent !== undefined  ? data.houseProfitPercent  : undefined,
+        bankAccountName:     data.bankAccountName !== undefined     ? data.bankAccountName     : undefined,
+        bankAccountNumber:   data.bankAccountNumber !== undefined   ? data.bankAccountNumber   : undefined,
+        bankIfscCode:        data.bankIfscCode !== undefined        ? data.bankIfscCode        : undefined,
+        upiId:               data.upiId !== undefined               ? data.upiId               : undefined,
+        qrCodeUrl:           data.qrCodeUrl !== undefined           ? data.qrCodeUrl           : undefined,
         paymentInstructions: data.paymentInstructions !== undefined ? data.paymentInstructions : undefined,
       }
     });

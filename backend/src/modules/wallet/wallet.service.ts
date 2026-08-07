@@ -1,22 +1,40 @@
 import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
-import { TransactionType, TransactionStatus } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/client';
+import { TransactionType, TransactionStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionDto } from './dto/transaction.dto';
+import { EventStreamService } from '../../events/event-stream.service';
 
 @Injectable()
 export class WalletService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventStream: EventStreamService,
+  ) {}
 
   async getBalance(userId: string) {
+    const redisBalance = await this.eventStream.getLiveBalance(userId);
+    if (redisBalance !== null) {
+      return {
+        success: true,
+        data: { balance: parseFloat(redisBalance) }
+      };
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { balance: true }
     });
+
+    const balanceValue = user ? user.balance.toNumber() : 0;
+    if (user) {
+      // Seed Redis with the Postgres balance for future reads
+      await this.eventStream.seedUserBalance(userId, user.balance.toFixed(2));
+    }
     
     return {
       success: true,
-      data: { balance: user ? (user as any).balance.toNumber() : 0 }
+      data: { balance: balanceValue }
     };
   }
 
@@ -75,7 +93,7 @@ export class WalletService {
   }
 
   async withdraw(userId: string, dto: TransactionDto) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       const amount = new Decimal(dto.amount);
       if (!user || (user as any).balance.lt(amount)) {
@@ -97,6 +115,9 @@ export class WalletService {
       if (!updatedUser) {
         throw new ConflictException({ success: false, error: { message: 'Transaction conflict, please try again' } });
       }
+
+      // Sync Redis balance cache with the new Postgres balance
+      await this.eventStream.seedUserBalance(userId, updatedUser.balance.toFixed(2));
 
       const transaction = await tx.transaction.create({
         data: {
@@ -256,7 +277,7 @@ export class WalletService {
       throw new BadRequestException({ success: false, error: { message: 'Transaction already processed' } });
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const res = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (action === 'approve') {
         if (transaction.type === 'DEPOSIT') {
           // Update user balance
@@ -320,5 +341,22 @@ export class WalletService {
         return { success: true, data: updated };
       }
     });
+
+    // If balance was modified (Deposit Approved OR Withdrawal Rejected), sync Redis cache
+    const shouldSyncRedis = 
+      (action === 'approve' && transaction.type === 'DEPOSIT') ||
+      (action === 'reject' && transaction.type === 'WITHDRAW');
+
+    if (shouldSyncRedis) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: transaction.userId },
+        select: { balance: true }
+      });
+      if (user) {
+        await this.eventStream.seedUserBalance(transaction.userId, user.balance.toFixed(2));
+      }
+    }
+
+    return res;
   }
 }

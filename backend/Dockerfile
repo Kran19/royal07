@@ -40,6 +40,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./
 
 # Create uploads directory
 RUN mkdir -p /app/uploads/proofs && chown -R nodejs:nodejs /app/uploads

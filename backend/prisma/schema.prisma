@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Users table
@@ -220,6 +219,10 @@ model AdminSettings {
   minBetAmount        Decimal  @default(10) @db.Decimal(18, 2)
   maxBetAmount        Decimal  @default(100000) @db.Decimal(18, 2)
   maintenanceMode     Boolean  @default(false)
+  
+  // House profit: percentage of total stake kept as guaranteed house profit (0-100)
+  // Default 5 means: 5% of all stakes are kept, 95% is the maximum payout pool
+  houseProfitPercent  Decimal  @default(5) @db.Decimal(5, 2)
   
   // Payment Details
   bankAccountName     String?

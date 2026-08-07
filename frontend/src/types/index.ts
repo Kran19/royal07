@@ -195,4 +195,5 @@ export interface AdminSettings {
   upiId?: string | null;
   qrCodeUrl?: string | null;
   paymentInstructions?: string | null;
+  houseProfitPercent?: number;
 }

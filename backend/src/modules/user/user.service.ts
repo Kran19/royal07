@@ -1,9 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventStreamService } from '../../events/event-stream.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventStream: EventStreamService,
+  ) {}
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -19,6 +23,20 @@ export class UserService {
         createdAt: true
       }
     });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Read live balance from Redis first (source of truth)
+    const redisBalance = await this.eventStream.getLiveBalance(userId);
+    if (redisBalance !== null) {
+      (user as any).balance = parseFloat(redisBalance);
+    } else {
+      // Seed Redis with the Postgres balance for future reads
+      await this.eventStream.seedUserBalance(userId, user.balance.toFixed(2));
+      (user as any).balance = user.balance.toNumber();
+    }
     
     return { success: true, data: user };
   }
