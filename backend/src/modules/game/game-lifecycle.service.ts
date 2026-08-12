@@ -503,7 +503,7 @@ export class GameLifecycleService implements OnModuleInit {
           type:       EventType.BET_WON,
           roundId,
           userId:     bet.userId,
-          betId:      '', // Assigned by DB worker after persistence
+          betId:      bet.eventId,
           payout:     payout.toFixed(2),
           multiplier: this.getMultiplier(bet.betType as BetType),
           result:     this.currentResult,
@@ -518,7 +518,7 @@ export class GameLifecycleService implements OnModuleInit {
           type:       EventType.BET_LOST,
           roundId,
           userId:     bet.userId,
-          betId:      '',
+          betId:      bet.eventId,
           result:     this.currentResult,
           betType:    bet.betType,
           numbers:    bet.numbers,

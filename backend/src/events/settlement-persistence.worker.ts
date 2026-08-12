@@ -124,6 +124,23 @@ export class SettlementPersistenceWorker {
     });
     this.logger.debug(`Q1 done: all bets in round ${roundId} marked SETTLED`);
 
+    // ─── Query 1.5: Set settlementAmount for winning bets ───
+    if (wonEvents.length > 0) {
+      const caseStatements = wonEvents
+        .map(ev => `WHEN '${ev.betId}' THEN ${ev.payout}::numeric`)
+        .join('\n    ');
+      const inClause = wonEvents
+        .map(ev => `'${ev.betId}'`)
+        .join(', ');
+
+      await this.prisma.$executeRawUnsafe(`
+        UPDATE "Bet"
+        SET "settlementAmount" = CASE id ${caseStatements} END
+        WHERE id IN (${inClause})
+      `);
+      this.logger.debug(`Q1.5 done: updated settlementAmount for ${wonEvents.length} winning bets`);
+    }
+
     // ─── Query 2: Bulk credit winner balances in Postgres (1 raw SQL query) ───
     if (wonEvents.length > 0) {
       // Build CASE WHEN SQL for bulk update

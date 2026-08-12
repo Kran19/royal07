@@ -478,20 +478,29 @@ function App() {
   const sendBetToBackend = useCallback((template: BetTemplate, source = 'manual') => {
     if (phase !== 'BETTING' || !socketRef.current) return false;
 
-    // Mapping UI templates to Backend BetTypes
-    let betType: BetType = BetType.SINGLE;
-    if (template.mode === 'PAIR') {
+    if (template.mode === 'SIMPLE') {
+      // Send individual bets for each floor
+      for (const [floorStr, amt] of Object.entries(template.floorBets)) {
+        socketRef.current.emit('place_bet', {
+          betType: BetType.SINGLE,
+          numbers: [Number(floorStr)],
+          amount: amt
+        });
+      }
+    } else {
+      // Mapping UI templates to Backend BetTypes for combinations
+      let betType: BetType = BetType.SINGLE;
       const count = template.floors.length;
       if (count === 2) betType = BetType.PAIR;
       else if (count === 3) betType = BetType.TRIPLE;
       else if (count === 4) betType = BetType.QUAD;
-    }
 
-    const payload = {
-      betType,
-      numbers: template.floors,
-      amount: template.stake / (template.mode === 'SIMPLE' ? template.floors.length : 1)
-    };
+      socketRef.current.emit('place_bet', {
+        betType,
+        numbers: template.floors,
+        amount: template.stake
+      });
+    }
 
     // Optimistic UI merge
     setActiveBet((prev: any) => {
@@ -518,8 +527,6 @@ function App() {
           : prev.pairBets
       };
     });
-
-    socketRef.current.emit('place_bet', payload);
 
     if (source !== 'auto') {
       setDraftSimpleBets({});

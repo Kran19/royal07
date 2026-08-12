@@ -93,15 +93,14 @@ export class EventProcessorWorker implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      // Build bet rows for createMany
       const betRows = events.map(ev => ({
+        id: ev.eventId,
         userId: ev.userId,
         roundId: ev.roundId,
         betType: ev.betType as any,
         numbers: ev.numbers,
         amount: ev.amount,
         status: 'ACTIVE' as const,
-        // Store eventId in a metadata field if schema supports it; otherwise skip
       }));
 
       // Build transaction rows for createMany (BET_PLACED records)

@@ -9,7 +9,7 @@ interface GameMenuModalProps {
   user?: {
     username?: string;
     avatar?: string;
-  };
+  } | null;
   soundEnabled: boolean;
   setSoundEnabled: (v: boolean) => void;
   musicEnabled: boolean;

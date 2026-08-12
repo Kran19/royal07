@@ -67,53 +67,82 @@ export default function MyBetsModal({ isOpen, onClose, token }: MyBetsModalProps
         ) : history.length === 0 ? (
           <div className="py-20 text-center text-slate-500 italic">No bets found. Start playing to see your history!</div>
         ) : (
-          <div className="w-full">
-            <div className="grid grid-cols-3 px-4 py-2 text-[0.65rem] font-bold uppercase tracking-widest text-slate-500 border-b border-white/5 bg-[#0b0e14]">
-              <div>Date / Round</div>
-              <div className="text-center">Bet & Mode</div>
-              <div className="text-right">Win (₹)</div>
-            </div>
+            <div className="flex flex-col gap-2 p-2">
             {history.map((bet: any, idx: number) => {
               const isWin = bet.settlementAmount > 0;
               const isSettled = bet.round.status === 'SETTLED';
-              const isEven = idx % 2 === 0;
-              const dateStr = bet.createdAt ? new Date(bet.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }) : `Rnd ${bet.round.roundNumber}`;
-              const timeStr = bet.createdAt ? new Date(bet.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+              const dateStr = bet.createdAt ? new Date(bet.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+              const timeStr = bet.createdAt ? new Date(bet.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
               
-              const modeLabel = bet.betType === 'SINGLE' ? 'SIMP' : bet.betType === 'PAIR' ? 'COMB' : bet.betType.substring(0, 4);
-              const pillLabel = (isWin && bet.amount > 0) ? `${(bet.settlementAmount / bet.amount).toFixed(2)}x` : modeLabel;
+              const modeLabel = bet.betType === 'SINGLE' ? 'SIMPLE' : bet.betType === 'PAIR' ? 'COMBINED' : bet.betType;
 
               return (
-                <div key={bet.id} className={cn('grid grid-cols-3 items-center px-4 py-3 text-sm border-b border-white/[0.02]', isEven ? 'bg-[#111623]' : 'bg-[#0c101a]')}>
-                  <div className="text-slate-400 text-xs font-mono">
-                    {dateStr} {timeStr && `· ${timeStr}`}
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-white font-mono">{Number(bet.amount).toFixed(2)}</span>
-                    <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm', isWin ? 'bg-[#5cb83d] text-black' : 'bg-white/10 text-slate-300')}>
-                      {pillLabel}
+                <div key={bet.id} className="flex flex-col bg-[#141926] rounded-xl border border-white/5 p-3">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white tracking-wide">Round {bet.round.roundNumber}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{dateStr} {timeStr}</span>
+                    </div>
+                    <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider', bet.betType === 'SINGLE' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400')}>
+                      {modeLabel}
                     </span>
                   </div>
-                  <div className="flex items-center justify-end gap-2">
-                    {isSettled ? (
-                      isWin ? (
-                        <>
-                          <span className="text-[#5cb83d] font-mono font-bold">{Number(bet.settlementAmount).toFixed(2)}</span>
-                          <div className="w-4 h-4 bg-[#5cb83d] rounded-[3px] flex items-center justify-center">
-                            <svg className="w-3 h-3 text-[#0a0f18]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs text-slate-400">Bet Amount</div>
+                      <div className="text-sm text-white font-mono font-bold">₹{Number(bet.amount).toFixed(2)}</div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1 items-end">
+                      <div className="text-xs text-slate-400">Payout</div>
+                      {isSettled ? (
+                        isWin ? (
+                          <div className="text-sm text-[#5cb83d] font-mono font-bold flex items-center gap-1">
+                            +₹{Number(bet.settlementAmount).toFixed(2)}
                           </div>
-                        </>
+                        ) : (
+                          <div className="text-sm text-slate-500 font-mono font-bold">-₹{Number(bet.amount).toFixed(2)}</div>
+                        )
                       ) : (
-                        <span className="text-slate-500 font-mono">-</span>
-                      )
-                    ) : (
-                      <span className="text-slate-400 font-mono">...</span>
+                        <div className="text-sm text-yellow-400 font-mono font-bold animate-pulse">Pending...</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start justify-between bg-black/20 rounded-lg p-2 mt-1">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Your Numbers</span>
+                      <div className="flex flex-wrap gap-1">
+                        {bet.numbers?.map((n: number) => (
+                          <span key={n} className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 text-white text-[10px] font-bold">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {isSettled && bet.round.openingResult && (
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Result</span>
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          {bet.round.openingResult?.map((n: number) => {
+                            const isMatched = bet.numbers?.includes(n);
+                            return (
+                              <span key={n} className={cn("w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold", isMatched ? "bg-[#5cb83d] text-black" : "bg-white/5 text-slate-400")}>
+                                {n}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
+
                 </div>
               );
             })}
-          </div>
+            </div>
         )}
       </div>
     </div>
