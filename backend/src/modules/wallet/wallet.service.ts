@@ -4,12 +4,14 @@ import { TransactionType, TransactionStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionDto } from './dto/transaction.dto';
 import { EventStreamService } from '../../events/event-stream.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 @Injectable()
 export class WalletService {
   constructor(
     private prisma: PrismaService,
     private eventStream: EventStreamService,
+    private websocketGateway: WebsocketGateway,
   ) {}
 
   async getBalance(userId: string) {
@@ -118,6 +120,7 @@ export class WalletService {
 
       // Invalidate Redis balance cache so it pulls the new deducted amount from Postgres
       await this.eventStream.invalidateUserBalance(userId);
+      this.websocketGateway.broadcastToUser(userId, 'balance_update', { balance: updatedUser.balance.toNumber() });
 
       const transaction = await tx.transaction.create({
         data: {
@@ -349,6 +352,8 @@ export class WalletService {
 
     if (shouldSyncRedis) {
       await this.eventStream.invalidateUserBalance(transaction.userId);
+      const balanceData = await this.getBalance(transaction.userId);
+      this.websocketGateway.broadcastToUser(transaction.userId, 'balance_update', { balance: balanceData.data.balance });
     }
 
     return res;

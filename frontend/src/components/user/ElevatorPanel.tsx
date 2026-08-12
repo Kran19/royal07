@@ -36,7 +36,7 @@ function ElevatorPanel({
   const readableLabel =
     phase === 'BETTING' ? 'Betting Open' :
     phase === 'LOCKED' ? 'Bets Closed' :
-    phase === 'MOVING' ? 'Elevator Moving' : phaseLabel;
+    phase === 'MOVING' ? 'Waiting' : phaseLabel;
 
   return (
     <section className={`panel game-panel ${mobileHidden ? 'mobile-hidden' : ''}`}>

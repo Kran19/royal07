@@ -9,12 +9,14 @@ import MobileNav from '@/components/user/MobileNav';
 import { DesktopSidePanel } from '@/components/user/SidePanel';
 import TopBar from '@/components/user/TopBar';
 import WalletModal from '@/components/user/WalletModal';
+import MyBetsModal from '@/components/user/MyBetsModal';
 import WalletPanel from '@/components/user/WalletPanel';
 import { createPairBetTemplate, createSimpleSelectionTemplate, PAIR_MULTIPLIERS } from '@/lib/gameLogic';
 import type { ValidationResult, BetTemplate } from '@/lib/gameLogic';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { BetType, RoundStatus } from '@/types';
 import './game.css';
+import { cn } from "../../lib/utils";
 
 const soundBetPlaced = '/elevator/sounds/v2/bet_placed.mp3';
 const soundElevatorStart = '/elevator/sounds/v2/elevator_start.mp3';
@@ -27,9 +29,9 @@ const soundMiss = '/elevator/sounds/v2/clear.mp3';
 const INITIAL_QUICK_CHIPS = [10, 20, 30, 50, 100, 200, 500, 1000];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:4000' 
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:4000'
     : API_BASE);
 
 interface GameBet {
@@ -65,6 +67,7 @@ function App() {
   const [userPassword, setUserPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [walletOpen, setWalletOpen] = useState(false);
+  const [myBetsOpen, setMyBetsOpen] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
@@ -80,20 +83,20 @@ function App() {
   const [pairFloors, setPairFloors] = useState<number[]>([]);
   const [pairAmount, setPairAmount] = useState('100');
   const [activeBet, setActiveBet] = useState<GameBet | null>(null);
-  
+
   // Elevator State
   const [targetStops, setTargetStops] = useState<number[]>([]);
   const [roundStops, setRoundStops] = useState<number[]>([]);
   const [currentFloor, setCurrentFloor] = useState(0);
   const [activeFloor, setActiveFloor] = useState(0);
   const [doorOpen, setDoorOpen] = useState(false);
-  
+
   // History / Feed
   const [history, setHistory] = useState<GameHistoryItem[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [mobileTab, setMobileTab] = useState('game');
   const [liveFeed, setLiveFeed] = useState<LiveFeedItem[]>([]);
-  
+
   // Autoplay
   const [autoEnabled, setAutoEnabled] = useState(false);
   const [autoRounds, setAutoRounds] = useState('3');
@@ -141,7 +144,7 @@ function App() {
     const sound = soundsRef.current[name];
     if (!sound) return;
     sound.currentTime = 0;
-    sound.play().catch(() => {});
+    sound.play().catch(() => { });
   }, []);
 
   const pushToast = useCallback((message: string, type = 'info') => {
@@ -319,7 +322,7 @@ function App() {
 
   const draftStake = draftCheck.valid ? draftCheck.template?.stake || 0 : 0;
   const draftWin = draftCheck.valid ? draftCheck.template?.potentialWin || 0 : 0;
-  
+
   const activeStake = activeBet?.stake || 0;
   let maxActiveWin = 0;
   if (activeBet?.simpleFloorBets) {
@@ -424,13 +427,13 @@ function App() {
   const betActionLabel = useMemo(() => {
     if (phase === 'BETTING' && activeBet?.stake) return 'Add Bet';
     if (phase === 'LOCKED') return 'Betting Closed';
-    if (phase === 'MOVING') return 'Elevator Moving';
+    if (phase === 'MOVING') return 'Waiting';
     return 'Place Bet';
   }, [activeBet, phase]);
 
   const sendBetToBackend = useCallback((template: BetTemplate, source = 'manual') => {
     if (phase !== 'BETTING' || !socketRef.current) return false;
-    
+
     // Mapping UI templates to Backend BetTypes
     let betType: BetType = BetType.SINGLE;
     if (template.mode === 'PAIR') {
@@ -455,7 +458,7 @@ function App() {
           pairBets: template.mode === 'PAIR' ? [{ floors: template.floors, pairAmount: template.pairAmount }] : []
         };
       }
-      
+
       const newSimpleBets = { ...prev.simpleFloorBets };
       if (template.mode === 'SIMPLE') {
         for (const [f, amt] of Object.entries(template.floorBets)) {
@@ -466,7 +469,7 @@ function App() {
       return {
         stake: prev.stake + template.stake,
         simpleFloorBets: newSimpleBets,
-        pairBets: template.mode === 'PAIR' 
+        pairBets: template.mode === 'PAIR'
           ? [...prev.pairBets, { floors: template.floors, pairAmount: template.pairAmount }]
           : prev.pairBets
       };
@@ -529,7 +532,7 @@ function App() {
   useEffect(() => {
     if (phase !== 'MOVING' || targetStops.length === 0) return;
     if (lastRunRoundId.current === roundId) return;
-    
+
     lastRunRoundId.current = roundId;
     let cancelled = false;
 
@@ -550,7 +553,7 @@ function App() {
           setDoorOpen(true);
           playSound('ding');
           playSound('ring');
-          
+
           if (activeBetRef.current?.simpleFloorBets?.[floor]) {
             playSound('win');
             pushToast(`🎉 Floor ${floor} Hit! +${(activeBetRef.current.simpleFloorBets[floor] * 3).toLocaleString()}`, 'win');
@@ -567,13 +570,13 @@ function App() {
               }
             }
           });
-          
+
           await new Promise((resolve) => setTimeout(resolve, 2500)); // 2.5s door stays open
           setDoorOpen(false);
           await new Promise((resolve) => setTimeout(resolve, 300)); // brief pause before moving again
         }
       }
-      
+
       setHistory((prev) => [{ stops: latestStops, bet: activeBetRef.current }, ...prev].slice(0, 10));
     };
 
@@ -592,8 +595,8 @@ function App() {
 
   if (isAuthLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712]">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-yellow-400 border-t-transparent shadow-[0_0_15px_rgba(250,204,21,0.3)]"></div>
+      <div className={cn('flex', 'min-h-screen', 'items-center', 'justify-center', 'bg-[#030712]')}>
+        <div className={cn('h-12', 'w-12', 'animate-spin', 'rounded-full', 'border-4', 'border-yellow-400', 'border-t-transparent', 'shadow-[0_0_15px_rgba(250,204,21,0.3)]')}></div>
       </div>
     );
   }
@@ -601,41 +604,41 @@ function App() {
   return (
     <div className="app-shell">
       <div className="fx-bg" />
-      
+
       {maintenanceMode && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#030712]/95 backdrop-blur-xl">
-          <div className="panel max-w-lg p-10 text-center shadow-2xl" style={{ borderTop: '4px solid #f59e0b' }}>
-            <div className="mb-6 flex justify-center">
-              <div className="relative h-24 w-24">
-                <div className="absolute inset-0 animate-ping rounded-full bg-yellow-500/20" />
-                <div className="relative flex h-full w-full items-center justify-center rounded-full bg-yellow-500/10 text-yellow-500 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                  <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={cn('fixed', 'inset-0', 'z-[100]', 'flex', 'items-center', 'justify-center', 'bg-[#030712]/95', 'backdrop-blur-xl')}>
+          <div className={cn('panel', 'max-w-lg', 'p-10', 'text-center', 'shadow-2xl')} style={{ borderTop: '4px solid #f59e0b' }}>
+            <div className={cn('mb-6', 'flex', 'justify-center')}>
+              <div className={cn('relative', 'h-24', 'w-24')}>
+                <div className={cn('absolute', 'inset-0', 'animate-ping', 'rounded-full', 'bg-yellow-500/20')} />
+                <div className={cn('relative', 'flex', 'h-full', 'w-full', 'items-center', 'justify-center', 'rounded-full', 'bg-yellow-500/10', 'text-yellow-500', 'shadow-[0_0_30px_rgba(245,158,11,0.2)]')}>
+                  <svg className={cn('h-12', 'w-12')} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
               </div>
             </div>
-            <h1 className="mb-3 text-4xl font-black italic tracking-tighter text-yellow-400" style={{ fontFamily: 'Sora' }}>
+            <h1 className={cn('mb-3', 'text-4xl', 'font-black', 'italic', 'tracking-tighter', 'text-yellow-400')} style={{ fontFamily: 'Sora' }}>
               REPAIR IN PROGRESS
             </h1>
-            <p className="mb-8 text-lg font-medium leading-relaxed text-slate-300">
-              The Royal Elevator is currently undergoing its 100-floor inspection. 
+            <p className={cn('mb-8', 'text-lg', 'font-medium', 'leading-relaxed', 'text-slate-300')}>
+              The Royal Elevator is currently undergoing its 100-floor inspection.
               Our technicians are polishing the gold and greasing the gears.
             </p>
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-bold text-slate-400">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
+            <div className={cn('flex', 'flex-col', 'items-center', 'gap-4')}>
+              <div className={cn('flex', 'items-center', 'gap-2', 'rounded-full', 'bg-white/5', 'px-4', 'py-2', 'text-sm', 'font-bold', 'text-slate-400')}>
+                <span className={cn('h-2', 'w-2', 'animate-pulse', 'rounded-full', 'bg-cyan-400')} />
                 ESTIMATED COMPLETION: SOON™
               </div>
-              <p className="text-xs italic text-slate-500">Thank you for your patience, Your Highness.</p>
+              <p className={cn('text-xs', 'italic', 'text-slate-500')}>Thank you for your patience, Your Highness.</p>
             </div>
           </div>
         </div>
       )}
 
       {!isLoggedIn ? (
-        <AuthForm 
-          mode={authMode} 
+        <AuthForm
+          mode={authMode}
           setMode={setAuthMode}
           name={userName} setName={setUserName}
           mobile={userMobile} setMobile={setUserMobile}
@@ -660,7 +663,7 @@ function App() {
             setAuthLoading(true);
             try {
               const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
-              const body = authMode === 'register' 
+              const body = authMode === 'register'
                 ? { mobile: userMobile.trim(), username: userName.trim(), password: userPassword }
                 : { mobile: userMobile.trim(), password: userPassword };
 
@@ -688,13 +691,13 @@ function App() {
         />
       ) : (
         <>
-          {isDesktop && <TopBar balance={balance} onWalletOpen={() => setWalletOpen(true)} onLogout={logout} />}
-          
+          {isDesktop && <TopBar balance={balance} onWalletOpen={() => setWalletOpen(true)} onMyBetsOpen={() => setMyBetsOpen(true)} onLogout={logout} />}
+
           <main className={isDesktop ? "layout" : "mobile-layout overflow-hidden h-[100dvh]"}>
             {isDesktop ? (
               <>
                 <DesktopSidePanel liveFeed={liveFeed.slice(0, 8)} historyFeed={historyFeed.slice(0, 8)} />
-                
+
                 <ElevatorPanel
                   phaseLabel={phaseLabel}
                   phase={phase}
@@ -708,7 +711,7 @@ function App() {
                   mobileHidden={false}
                 />
 
-                <section className="controls-right desktop-only">
+                <section className={cn('controls-right', 'desktop-only')}>
                   <ControlsPanel
                     mode={mode} setMode={onModeChange}
                     quickChips={quickChips} quickAmount={quickAmount}
@@ -729,7 +732,7 @@ function App() {
               <>
                 {/* Mobile Game Screen */}
                 {mobileTab === 'game' && (
-                  <div className="flex flex-col flex-1 h-full overflow-hidden">
+                  <div className={cn('flex', 'flex-col', 'flex-1', 'h-full', 'overflow-hidden')}>
                     <ElevatorPanel
                       phaseLabel={phaseLabel}
                       phase={phase}
@@ -742,7 +745,7 @@ function App() {
                       balance={balance}
                       mobileHidden={false}
                     />
-                    
+
                     <section className="mobile-controls">
                       <ControlsPanel
                         mode={mode} setMode={onModeChange}
@@ -764,23 +767,23 @@ function App() {
 
                 {/* Mobile Live Social Screen */}
                 {mobileTab === 'live' && (
-                  <section className="mobile-stage h-full overflow-y-auto">
-                    <h3 className="text-xl font-black text-yellow-400 p-4 border-b border-white/10 bg-slate-900/50 flex items-center gap-2">
+                  <section className={cn('mobile-stage', 'h-full', 'overflow-y-auto')}>
+                    <h3 className={cn('text-xl', 'font-black', 'text-yellow-400', 'p-4', 'border-b', 'border-white/10', 'bg-slate-900/50', 'flex', 'items-center', 'gap-2')}>
                       <span>📡</span> Live Social Feed
                     </h3>
-                    <div className="p-4 space-y-3 pb-32">
+                    <div className={cn('p-4', 'space-y-3', 'pb-32')}>
                       {liveFeed.length === 0 ? (
-                        <div className="py-20 text-center text-slate-500 italic">Connecting to live feed...</div>
+                        <div className={cn('py-20', 'text-center', 'text-slate-500', 'italic')}>Connecting to live feed...</div>
                       ) : (
                         liveFeed.map((bet, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-4 duration-500">
+                          <div key={idx} className={cn('flex', 'items-center', 'justify-between', 'p-4', 'rounded-2xl', 'bg-white/5', 'border', 'border-white/5', 'animate-in', 'fade-in', 'slide-in-from-right-4', 'duration-500')}>
                             <div>
-                              <p className="text-sm font-bold text-slate-200 uppercase tracking-tighter">{bet.user}</p>
-                              <p className="text-[10px] text-slate-400 italic">Placed bet on <span className="text-cyan-400 font-semibold">{bet.floor}</span></p>
+                              <p className={cn('text-sm', 'font-bold', 'text-slate-200', 'uppercase', 'tracking-tighter')}>{bet.user}</p>
+                              <p className={cn('text-[10px]', 'text-slate-400', 'italic')}>Placed bet on <span className={cn('text-cyan-400', 'font-semibold')}>{bet.floor}</span></p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-yellow-400">₹{bet.amount.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Active Bet</p>
+                              <p className={cn('text-sm', 'font-black', 'text-yellow-400')}>₹{bet.amount.toLocaleString()}</p>
+                              <p className={cn('text-[10px]', 'text-slate-500', 'uppercase', 'tracking-widest')}>Active Bet</p>
                             </div>
                           </div>
                         ))
@@ -791,31 +794,31 @@ function App() {
 
                 {/* Mobile Personal History Screen */}
                 {mobileTab === 'history' && (
-                  <section className="mobile-stage h-full overflow-y-auto">
-                    <h3 className="text-xl font-black text-yellow-400 p-4 border-b border-white/10 bg-slate-900/50 flex items-center gap-2">
+                  <section className={cn('mobile-stage', 'h-full', 'overflow-y-auto')}>
+                    <h3 className={cn('text-xl', 'font-black', 'text-yellow-400', 'p-4', 'border-b', 'border-white/10', 'bg-slate-900/50', 'flex', 'items-center', 'gap-2')}>
                       <span>📋</span> Bet History
                     </h3>
-                    <div className="p-4 space-y-3 pb-32">
+                    <div className={cn('p-4', 'space-y-3', 'pb-32')}>
                       {personalHistory.length === 0 ? (
-                        <div className="py-20 text-center text-slate-500 italic">No bets found. Start playing to see your history!</div>
+                        <div className={cn('py-20', 'text-center', 'text-slate-500', 'italic')}>No bets found. Start playing to see your history!</div>
                       ) : (
                         personalHistory.map((bet: any) => (
-                          <div key={bet.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-500">Round #{bet.round.roundNumber}</span>
+                          <div key={bet.id} className={cn('p-4', 'rounded-2xl', 'bg-white/5', 'border', 'border-white/5', 'flex', 'flex-col', 'gap-2')}>
+                            <div className={cn('flex', 'items-center', 'justify-between')}>
+                              <div className={cn('flex', 'items-center', 'gap-2')}>
+                                <span className={cn('text-xs', 'font-bold', 'text-slate-500')}>Round #{bet.round.roundNumber}</span>
                                 <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full ${bet.settlementAmount > 0 ? 'bg-emerald-500/20 text-emerald-400' : (bet.round.status === 'SETTLED' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-500/20 text-slate-400')}`}>
                                   {bet.settlementAmount > 0 ? 'WIN' : (bet.round.status === 'SETTLED' ? 'LOSE' : 'WAITING')}
                                 </span>
                               </div>
-                              <span className="text-sm font-black text-white">₹{bet.amount.toLocaleString()}</span>
+                              <span className={cn('text-sm', 'font-black', 'text-white')}>₹{bet.amount.toLocaleString()}</span>
                             </div>
-                            <div className="text-xs text-slate-400">
-                              Mode: <span className="text-slate-200">{bet.betType}</span> | 
+                            <div className={cn('text-xs', 'text-slate-400')}>
+                              Mode: <span className="text-slate-200">{bet.betType}</span> |
                               Floors: <span className="text-slate-200">{bet.numbers.join(', ')}</span>
                             </div>
                             {bet.round.status === 'SETTLED' && (
-                              <div className="text-[10px] text-slate-500 border-t border-white/5 pt-2">
+                              <div className={cn('text-[10px]', 'text-slate-500', 'border-t', 'border-white/5', 'pt-2')}>
                                 Opened Floors: {bet.round.openingResult?.join(', ') || 'None'}
                               </div>
                             )}
@@ -828,13 +831,13 @@ function App() {
 
                 {/* Mobile Full Screen Wallet Screen */}
                 {mobileTab === 'wallet' && (
-                  <section className="mobile-stage h-full flex flex-col bg-slate-950">
-                    <div className="p-4 border-b border-white/10 bg-slate-900 flex items-center justify-between">
-                      <h3 className="text-xl font-black text-white flex items-center gap-2">
+                  <section className={cn('mobile-stage', 'h-full', 'flex', 'flex-col', 'bg-slate-950')}>
+                    <div className={cn('p-4', 'border-b', 'border-white/10', 'bg-slate-900', 'flex', 'items-center', 'justify-between')}>
+                      <h3 className={cn('text-xl', 'font-black', 'text-white', 'flex', 'items-center', 'gap-2')}>
                         <span>💳</span> My Wallet
                       </h3>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 pb-32">
+                    <div className={cn('flex-1', 'overflow-y-auto', 'p-4', 'pb-32')}>
                       <WalletPanel token={authToken || ''} balance={balance} onBalanceChange={setBalance} onLogout={logout} />
                     </div>
                   </section>
@@ -842,18 +845,25 @@ function App() {
               </>
             )}
           </main>
-          
-          {!isDesktop && <MobileNav tab={mobileTab} setTab={setMobileTab} />}
 
           {/* Desktop Only Wallet Modal */}
           {isDesktop && (
-            <WalletModal 
-              isOpen={walletOpen} 
-              onClose={() => setWalletOpen(false)} 
-              token={authToken || ''} 
-              balance={balance} 
+            <WalletModal
+              isOpen={walletOpen}
+              onClose={() => setWalletOpen(false)}
+              token={authToken || ''}
+              balance={balance}
               onBalanceChange={setBalance}
               onLogout={logout}
+            />
+          )}
+
+          {/* Desktop Only My Bets Modal */}
+          {isDesktop && (
+            <MyBetsModal
+              isOpen={myBetsOpen}
+              onClose={() => setMyBetsOpen(false)}
+              token={authToken || ''}
             />
           )}
         </>
@@ -880,7 +890,7 @@ function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, s
   const [otpLoading, setOtpLoading] = useState(false);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, ''); 
+    const val = e.target.value.replace(/\D/g, '');
     if (val.length <= 10) {
       setMobile(val);
     }
@@ -914,17 +924,17 @@ function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, s
 
   return (
     <div className="auth-container">
-      <div className="auth-card animate-in fade-in zoom-in duration-500">
-        <div className="auth-header mb-4">
+      <div className={cn('auth-card', 'animate-in', 'fade-in', 'zoom-in', 'duration-500')}>
+        <div className={cn('auth-header', 'mb-4')}>
           <h2 className="!text-xl">RoyalBet</h2>
           <p className="!text-xs">{mode === 'login' ? 'Enter the arena' : 'Join the community'}</p>
         </div>
 
         <div className="space-y-3">
           {mode === 'register' && (
-            <div className="input-group animate-in slide-in-from-top-4">
-              <input 
-                type="text" 
+            <div className={cn('input-group', 'animate-in', 'slide-in-from-top-4')}>
+              <input
+                type="text"
                 className="amount-input"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -935,12 +945,12 @@ function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, s
           )}
 
           <div className="input-group">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">+91</span>
-                <input 
-                  type="tel" 
-                  className="amount-input !pl-14"
+            <div className={cn('flex', 'gap-2')}>
+              <div className={cn('relative', 'flex-1')}>
+                <span className={cn('absolute', 'left-4', 'top-1/2', '-translate-y-1/2', 'text-slate-500', 'font-bold', 'text-sm')}>+91</span>
+                <input
+                  type="tel"
+                  className={cn('amount-input', '!pl-14')}
                   value={mobile}
                   onChange={handleMobileChange}
                   placeholder="Mobile Number"
@@ -949,8 +959,8 @@ function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, s
               </div>
               {mode === 'register' && (
                 !isVerified ? (
-                  <button 
-                    onClick={handleSendOtp} 
+                  <button
+                    onClick={handleSendOtp}
                     disabled={otpLoading || mobile.length !== 10}
                     className="otp-btn"
                   >
@@ -964,67 +974,67 @@ function AuthForm({ mode, setMode, name, setName, mobile, setMobile, password, s
           </div>
 
           {mode === 'register' && otpSent && !isVerified && (
-            <div className="input-group animate-in slide-in-from-top-2">
-              <input 
-                type="text" 
+            <div className={cn('input-group', 'animate-in', 'slide-in-from-top-2')}>
+              <input
+                type="text"
                 className="amount-input"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0,6))}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="Enter 6-Digit OTP"
                 disabled={loading}
               />
             </div>
           )}
-          
+
           <div className="input-group">
             <div className="password-wrapper">
-              <input 
-                type={showPass ? "text" : "password"} 
-                className="amount-input !pr-14"
+              <input
+                type={showPass ? "text" : "password"}
+                className={cn('amount-input', '!pr-14')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 disabled={loading}
               />
-              <button type="button" className="password-toggle !top-1/2 !-translate-y-1/2" onClick={() => setShowPass(!showPass)}>
+              <button type="button" className={cn('password-toggle', '!top-1/2', '!-translate-y-1/2')} onClick={() => setShowPass(!showPass)}>
                 {showPass ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
 
           {mode === 'register' && (
-            <div className="input-group animate-in slide-in-from-top-4">
+            <div className={cn('input-group', 'animate-in', 'slide-in-from-top-4')}>
               <div className="password-wrapper">
-                <input 
-                  type={showConfirm ? "text" : "password"} 
-                  className="amount-input !pr-14"
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  className={cn('amount-input', '!pr-14')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm Password"
                   disabled={loading}
                 />
-                <button type="button" className="password-toggle !top-1/2 !-translate-y-1/2" onClick={() => setShowConfirm(!showConfirm)}>
+                <button type="button" className={cn('password-toggle', '!top-1/2', '!-translate-y-1/2')} onClick={() => setShowConfirm(!showConfirm)}>
                   {showConfirm ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
           )}
-          
-          <button 
-            className="primary-btn w-full !py-3 !text-sm mt-2 transform active:scale-[0.98] transition-all hover:brightness-110"
+
+          <button
+            className={cn('primary-btn', 'w-full', '!py-3', '!text-sm', 'mt-2', 'transform', 'active:scale-[0.98]', 'transition-all', 'hover:brightness-110')}
             disabled={loading || (mode === 'register' && !isVerified)}
             onClick={onSubmit}
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+              <span className={cn('flex', 'items-center', 'justify-center', 'gap-2')}>
+                <div className={cn('h-4', 'w-4', 'animate-spin', 'rounded-full', 'border-2', 'border-slate-900', 'border-t-transparent')} />
                 Processing...
               </span>
             ) : (mode === 'register' && !isVerified ? 'Verify Mobile First' : (mode === 'login' ? 'Enter Casino' : 'Join Now'))}
           </button>
 
-          <div className="auth-footer !mt-2">
-            <p className="auth-link !text-xs">
+          <div className={cn('auth-footer', '!mt-2')}>
+            <p className={cn('auth-link', '!text-xs')}>
               {mode === 'login' ? (
                 <>New here? <strong onClick={() => { setMode('register'); resetOtp(); }}>Register</strong></>
               ) : (
