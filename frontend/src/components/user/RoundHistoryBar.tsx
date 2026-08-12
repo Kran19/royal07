@@ -35,11 +35,11 @@ export function RoundHistoryBar({ history }: RoundHistoryBarProps) {
   const horizontalHistory = history.slice(0, 15);
 
   return (
-    <div className="relative w-full z-40 bg-transparent px-3 pb-2 pt-0.5 flex items-center justify-between gap-2 select-none">
+    <div className={cn('relative', 'w-full', 'z-40', 'bg-transparent', 'px-3', 'pb-2', 'pt-0.5', 'flex', 'items-center', 'justify-between', 'gap-2', 'select-none')}>
       {/* Horizontal List of Past Rounds */}
-      <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-1.5 scroll-smooth">
+      <div className={cn('flex-1', 'overflow-x-auto', 'no-scrollbar', 'flex', 'items-center', 'gap-1.5', 'scroll-smooth')}>
         {horizontalHistory.length === 0 ? (
-          <span className="text-[10px] text-slate-500 italic">Waiting for rounds...</span>
+          <span className={cn('text-[10px]', 'text-slate-500', 'italic')}>Waiting for rounds...</span>
         ) : (
           horizontalHistory.map((item, idx) => (
             <div
@@ -75,30 +75,29 @@ export function RoundHistoryBar({ history }: RoundHistoryBarProps) {
 
       {/* Dropdown Popover (expandable grid of 30 rounds) */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 bg-[#090f1a] border-b border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-in slide-in-from-top-2 duration-200 p-4">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
-            <span className="text-[10px] uppercase font-black tracking-wider text-slate-500">History (Last 30 Rounds)</span>
+        <div className={cn('absolute', 'top-full', 'left-0', 'right-0', 'bg-[#090f1a]', 'border-b', 'border-white/10', 'shadow-[0_15px_30px_rgba(0,0,0,0.8)]', 'backdrop-blur-xl', 'animate-in', 'slide-in-from-top-2', 'duration-200', 'p-4')}>
+          <div className={cn('flex', 'items-center', 'justify-between', 'border-b', 'border-white/5', 'pb-2', 'mb-3')}>
+            <span className={cn('text-[10px]', 'uppercase', 'font-black', 'tracking-wider', 'text-slate-500')}>Rounds History</span>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-[10px] text-slate-400 hover:text-white uppercase font-black"
+              className={cn('text-[10px]', 'text-slate-400', 'hover:text-white', 'uppercase', 'font-black')}
             >
               Close
             </button>
           </div>
           
           {recentHistory.length === 0 ? (
-            <div className="text-center py-6 text-[11px] text-slate-500 italic">No round history available yet.</div>
+            <div className={cn('text-center', 'py-6', 'text-[11px]', 'text-slate-500', 'italic')}>No round history available yet.</div>
           ) : (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[180px] overflow-y-auto pr-1">
+            <div className={cn('grid', 'grid-cols-4', 'sm:grid-cols-6', 'md:grid-cols-8', 'gap-2', 'max-h-[180px]', 'overflow-y-auto', 'pr-1')}>
               {recentHistory.map((item, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    "flex flex-col items-center justify-center py-1.5 px-2 rounded-lg border text-[11px] font-black font-display text-center",
+                    "flex items-center justify-center  rounded-full border text-[12px] font-black font-display text-center",
                     getBadgeStyle(item.stops.length)
                   )}
                 >
-                  <span className="opacity-40 text-[8px] font-normal mb-0.5">#{history.length - idx}</span>
                   <span>{formatStops(item.stops)}</span>
                 </div>
               ))}

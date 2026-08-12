@@ -12,7 +12,7 @@ interface ControlsPanelProps {
   setCustomQuickAmount: (val: string) => void;
   onQuickSelect: (val: number | string) => void;
   onApplyCustomQuick: () => void;
-  simpleFloors: number[];
+  draftSimpleBets: Record<number, number>;
   onToggleSimpleFloor: (floor: number) => void;
   placedFloorAmounts: Record<number, number>;
   pairFloors: number[];
@@ -38,7 +38,7 @@ function ControlsPanel({
   quickChips, quickAmount,
   customQuickAmount, setCustomQuickAmount,
   onQuickSelect, onApplyCustomQuick,
-  simpleFloors, onToggleSimpleFloor,
+  draftSimpleBets, onToggleSimpleFloor,
   placedFloorAmounts,
   pairFloors, onTogglePairFloor,
   pairAmount, setPairAmount,
@@ -75,23 +75,28 @@ function ControlsPanel({
         <div className="floor-section">
           {mode === 'SIMPLE' ? (
             <div className="bet-grid">
-              {FLOORS.map((floor) => (
+              {FLOORS.map((floor) => {
+                const draftAmt = draftSimpleBets[floor];
+                const placedAmt = placedFloorAmounts?.[floor];
+                return (
                 <button
                   key={floor}
                   type="button"
                   onClick={() => onToggleSimpleFloor(floor)}
                   className={
-                    `floor-btn ${simpleFloors.includes(floor) ? 'selected' : ''} ${placedFloorAmounts?.[floor] ? 'has-bet' : ''}`
+                    `floor-btn ${draftAmt ? 'selected' : ''} ${placedAmt ? 'has-bet' : ''}`
                   }
                 >
                   <span className="floor-text">
                     <span className="floor-prefix">F</span>{floor}
                   </span>
-                  {placedFloorAmounts?.[floor] ? (
-                    <span className="placed-chip">₹{placedFloorAmounts[floor]}</span>
+                  {placedAmt ? (
+                    <span className="placed-chip">₹{placedAmt}</span>
+                  ) : draftAmt ? (
+                    <span className="draft-chip">₹{draftAmt}</span>
                   ) : null}
                 </button>
-              ))}
+              )})}
             </div>
           ) : (
             <>

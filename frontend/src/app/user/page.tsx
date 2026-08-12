@@ -13,7 +13,8 @@ import { RoundHistoryBar } from '@/components/user/RoundHistoryBar';
 import WalletModal from '@/components/user/WalletModal';
 import MyBetsModal from '@/components/user/MyBetsModal';
 import WalletPanel from '@/components/user/WalletPanel';
-import { createPairBetTemplate, createSimpleSelectionTemplate, PAIR_MULTIPLIERS } from '@/lib/gameLogic';
+import GameMenuModal from '@/components/user/GameMenuModal';
+import { createPairBetTemplate, createSimpleSelectionTemplate, createSimpleBetTemplate, PAIR_MULTIPLIERS } from '@/lib/gameLogic';
 import type { ValidationResult, BetTemplate } from '@/lib/gameLogic';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { BetType, RoundStatus } from '@/types';
@@ -70,6 +71,10 @@ function App() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [walletOpen, setWalletOpen] = useState(false);
   const [myBetsOpen, setMyBetsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
@@ -81,7 +86,7 @@ function App() {
   const [quickAmount, setQuickAmount] = useState('100');
   const [quickChips, setQuickChips] = useState(INITIAL_QUICK_CHIPS);
   const [customQuickAmount, setCustomQuickAmount] = useState('');
-  const [simpleFloors, setSimpleFloors] = useState<number[]>([]);
+  const [draftSimpleBets, setDraftSimpleBets] = useState<Record<number, number>>({});
   const [pairFloors, setPairFloors] = useState<number[]>([]);
   const [pairAmount, setPairAmount] = useState('100');
   const [activeBet, setActiveBet] = useState<GameBet | null>(null);
@@ -143,11 +148,12 @@ function App() {
   }, []);
 
   const playSound = useCallback((name: string) => {
+    if (!soundEnabled) return;
     const sound = soundsRef.current[name];
     if (!sound) return;
     sound.currentTime = 0;
     sound.play().catch(() => { });
-  }, []);
+  }, [soundEnabled]);
 
   const pushToast = useCallback((message: string, type = 'info') => {
     const id = Math.random().toString(36).substring(2, 11);
@@ -244,7 +250,9 @@ function App() {
           // Reset visually on new round start
           setCurrentFloor(0);
           setActiveFloor(0);
-          setDoorOpen(false);
+          if (animationEnabled) {
+            setDoorOpen(false);
+          }
           setActiveBet(null);
           setTargetStops([]);
           setRoundStops([]);
@@ -295,7 +303,7 @@ function App() {
       if (socket) socket.disconnect();
       socketRef.current = null;
     };
-  }, [playSound, pushToast, isLoggedIn, authToken, authUserId]);
+  }, [playSound, pushToast, isLoggedIn, authToken, authUserId, animationEnabled]);
 
   const [personalHistory, setPersonalHistory] = useState<any[]>([]);
   const loadPersonalHistory = useCallback(async () => {
@@ -342,9 +350,9 @@ function App() {
   }, [mobileTab, loadPersonalHistory]);
 
   const draftCheck: ValidationResult = useMemo(() => {
-    if (mode === 'SIMPLE') return createSimpleSelectionTemplate(simpleFloors, quickAmount);
+    if (mode === 'SIMPLE') return createSimpleBetTemplate(draftSimpleBets);
     return createPairBetTemplate(pairFloors, pairAmount);
-  }, [mode, simpleFloors, quickAmount, pairFloors, pairAmount]);
+  }, [mode, draftSimpleBets, quickAmount, pairFloors, pairAmount]);
 
   const draftStake = draftCheck.valid ? draftCheck.template?.stake || 0 : 0;
   const draftWin = draftCheck.valid ? draftCheck.template?.potentialWin || 0 : 0;
@@ -378,13 +386,23 @@ function App() {
     pushToast('Auto stopped because bet settings changed', 'info');
   }, [autoEnabled, pushToast, stopAuto]);
 
-  const onToggleSimpleFloor = useCallback((floor: number) => {
+  const onFloorClick = useCallback((floor: number) => {
     stopAutoOnDraftChange();
-    setSimpleFloors((prev) => {
-      if (prev.includes(floor)) return prev.filter((f) => f !== floor);
-      return [...prev, floor].sort((a, b) => a - b);
+    const amt = Number(quickAmount) || 0;
+    if (amt <= 0) {
+      pushToast('Select a chip amount first', 'info');
+      return;
+    }
+    setDraftSimpleBets((prev) => {
+      const next = { ...prev };
+      if (next[floor]) {
+        delete next[floor];
+      } else {
+        next[floor] = amt;
+      }
+      return next;
     });
-  }, [stopAutoOnDraftChange]);
+  }, [quickAmount, stopAutoOnDraftChange, pushToast]);
 
   const onQuickSelect = useCallback((value: number | string) => {
     stopAutoOnDraftChange();
@@ -441,7 +459,7 @@ function App() {
 
   const clearDraft = useCallback(() => {
     stopAutoOnDraftChange();
-    if (mode === 'SIMPLE') setSimpleFloors([]);
+    if (mode === 'SIMPLE') setDraftSimpleBets({});
     else {
       setPairFloors([]);
       setPairAmount('');
@@ -504,7 +522,7 @@ function App() {
     socketRef.current.emit('place_bet', payload);
 
     if (source !== 'auto') {
-      setSimpleFloors([]);
+      setDraftSimpleBets({});
       setPairFloors([]);
     } else {
       setAutoPlacedId(Date.now().toString());
@@ -576,7 +594,9 @@ function App() {
         if (targetStops.includes(floor)) {
           latestStops.push(floor);
           setRoundStops(prev => [...prev, floor]);
-          setDoorOpen(true);
+          if (animationEnabled) {
+            setDoorOpen(true);
+          }
           playSound('ding');
           playSound('ring');
 
@@ -608,7 +628,7 @@ function App() {
 
     move();
     return () => { cancelled = true; };
-  }, [phase, roundId, playSound, pushToast]); // Depend on roundId for stability
+  }, [phase, roundId, playSound, pushToast, animationEnabled]); // Depend on roundId for stability
 
   const isDesktop = useMediaQuery('(min-width: 1025px)');
   const phaseLabel = phase === 'BETTING' ? 'BETTING OPEN' : phase;
@@ -717,7 +737,7 @@ function App() {
         />
       ) : (
         <>
-          {isDesktop && <TopBar balance={balance} onWalletOpen={() => setWalletOpen(true)} onMyBetsOpen={() => setMyBetsOpen(true)} onLogout={logout} />}
+          {isDesktop && <TopBar balance={balance} onWalletOpen={() => setWalletOpen(true)} onMyBetsOpen={() => setMyBetsOpen(true)} onMenuOpen={() => setMenuOpen(true)} onLogout={logout} />}
           {isDesktop && <RoundHistoryBar history={history} />}
 
           <main className={isDesktop ? "layout" : "mobile-layout overflow-hidden h-[100dvh]"}>
@@ -791,7 +811,7 @@ function App() {
                     quickChips={quickChips} quickAmount={quickAmount}
                     customQuickAmount={customQuickAmount} setCustomQuickAmount={setCustomQuickAmount}
                     onQuickSelect={onQuickSelect} onApplyCustomQuick={onApplyCustomQuick}
-                    simpleFloors={simpleFloors} onToggleSimpleFloor={onToggleSimpleFloor}
+                    draftSimpleBets={draftSimpleBets} onToggleSimpleFloor={onFloorClick}
                     placedFloorAmounts={placedFloorAmounts} pairFloors={pairFloors}
                     onTogglePairFloor={onTogglePairFloor} pairAmount={pairAmount} setPairAmount={onPairAmountChange}
                     stake={stake} potentialWin={potentialWin} onClearDraft={clearDraft}
@@ -812,6 +832,7 @@ function App() {
                       <MobileHeader 
                         balance={balance} 
                         onWalletClick={() => setWalletOpen(true)} 
+                        onMenuClick={() => setMenuOpen(true)}
                       />
                       
                       <RoundHistoryBar history={history} />
@@ -882,7 +903,7 @@ function App() {
                         quickChips={quickChips} quickAmount={quickAmount}
                         customQuickAmount={customQuickAmount} setCustomQuickAmount={setCustomQuickAmount}
                         onQuickSelect={onQuickSelect} onApplyCustomQuick={onApplyCustomQuick}
-                        simpleFloors={simpleFloors} onToggleSimpleFloor={onToggleSimpleFloor}
+                        draftSimpleBets={draftSimpleBets} onToggleSimpleFloor={onFloorClick}
                         placedFloorAmounts={placedFloorAmounts} pairFloors={pairFloors}
                         onTogglePairFloor={onTogglePairFloor} pairAmount={pairAmount} setPairAmount={onPairAmountChange}
                         stake={stake} potentialWin={potentialWin} onClearDraft={clearDraft}
@@ -976,26 +997,36 @@ function App() {
             )}
           </main>
 
-          {/* Desktop Only Wallet Modal */}
-          {isDesktop && (
-            <WalletModal
-              isOpen={walletOpen}
-              onClose={() => setWalletOpen(false)}
-              token={authToken || ''}
-              balance={balance}
-              onBalanceChange={setBalance}
-              onLogout={logout}
-            />
-          )}
+          {/* Wallet Modal */}
+          <WalletModal
+            isOpen={walletOpen}
+            onClose={() => setWalletOpen(false)}
+            token={authToken || ''}
+            balance={balance}
+            onBalanceChange={setBalance}
+            onLogout={logout}
+          />
 
-          {/* Desktop Only My Bets Modal */}
-          {isDesktop && (
-            <MyBetsModal
-              isOpen={myBetsOpen}
-              onClose={() => setMyBetsOpen(false)}
-              token={authToken || ''}
-            />
-          )}
+          {/* My Bets Modal */}
+          <MyBetsModal
+            isOpen={myBetsOpen}
+            onClose={() => setMyBetsOpen(false)}
+            token={authToken || ''}
+          />
+          
+          {/* Menu Modal */}
+          <GameMenuModal
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            user={user}
+            soundEnabled={soundEnabled}
+            setSoundEnabled={setSoundEnabled}
+            musicEnabled={musicEnabled}
+            setMusicEnabled={setMusicEnabled}
+            animationEnabled={animationEnabled}
+            setAnimationEnabled={setAnimationEnabled}
+            onMyBetsOpen={() => setMyBetsOpen(true)}
+          />
         </>
       )}
 

@@ -3,9 +3,10 @@ import React from 'react';
 interface MobileHeaderProps {
   balance: number;
   onWalletClick: () => void;
+  onMenuClick?: () => void;
 }
 
-export function MobileHeader({ balance, onWalletClick }: MobileHeaderProps) {
+export function MobileHeader({ balance, onWalletClick, onMenuClick }: MobileHeaderProps) {
   return (
     <div className="mobile-mock-top">
       {/* Header containing Logo on the left, Balance & Menu on the right */}
@@ -22,7 +23,7 @@ export function MobileHeader({ balance, onWalletClick }: MobileHeaderProps) {
           </button>
           
           {/* Menu Icon */}
-          <button className="mobile-menu-btn">
+          <button className="mobile-menu-btn" onClick={onMenuClick}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
