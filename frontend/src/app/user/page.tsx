@@ -9,6 +9,7 @@ import MobileNav from '@/components/user/MobileNav';
 import { DesktopSidePanel } from '@/components/user/SidePanel';
 import TopBar from '@/components/user/TopBar';
 import { MobileHeader } from '@/components/user/MobileHeader';
+import { RoundHistoryBar } from '@/components/user/RoundHistoryBar';
 import WalletModal from '@/components/user/WalletModal';
 import MyBetsModal from '@/components/user/MyBetsModal';
 import WalletPanel from '@/components/user/WalletPanel';
@@ -312,6 +313,30 @@ function App() {
     }
   }, [authToken]);
 
+  const loadRoundHistory = useCallback(async () => {
+    try {
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      const res = await fetch(`${API_BASE}/game/history?page=1&limit=30`, { headers });
+      const data = await res.json();
+      if (data.success && data.data?.items) {
+        const mappedHistory = data.data.items.map((r: any) => ({
+          stops: r.openingResult || r.stops || [],
+          bet: null
+        }));
+        setHistory(mappedHistory);
+      }
+    } catch (e) {
+      console.error('History load failed', e);
+    }
+  }, [authToken]);
+
+  useEffect(() => {
+    loadRoundHistory();
+  }, [loadRoundHistory]);
+
   useEffect(() => {
     if (mobileTab === 'history') loadPersonalHistory();
   }, [mobileTab, loadPersonalHistory]);
@@ -578,7 +603,7 @@ function App() {
         }
       }
 
-      setHistory((prev) => [{ stops: latestStops, bet: activeBetRef.current }, ...prev].slice(0, 10));
+      setHistory((prev) => [{ stops: latestStops, bet: activeBetRef.current }, ...prev].slice(0, 50));
     };
 
     move();
@@ -693,24 +718,72 @@ function App() {
       ) : (
         <>
           {isDesktop && <TopBar balance={balance} onWalletOpen={() => setWalletOpen(true)} onMyBetsOpen={() => setMyBetsOpen(true)} onLogout={logout} />}
+          {isDesktop && <RoundHistoryBar history={history} />}
 
           <main className={isDesktop ? "layout" : "mobile-layout overflow-hidden h-[100dvh]"}>
             {isDesktop ? (
               <>
                 <DesktopSidePanel liveFeed={liveFeed.slice(0, 8)} historyFeed={historyFeed.slice(0, 8)} />
 
-                <ElevatorPanel
-                  phaseLabel={phaseLabel}
-                  phase={phase}
-                  timer={timer}
-                  currentFloor={currentFloor}
-                  activeFloor={activeFloor}
-                  roundStops={roundStops}
-                  doorOpen={doorOpen}
-                  isDesktop={true}
-                  balance={balance}
-                  mobileHidden={false}
-                />
+                <div className="flex flex-col flex-1 h-full min-h-0">
+                    <div className="flex justify-center my-1.5 flex-shrink-0 w-full px-4">
+                      <div className={cn(
+                        "relative flex flex-col items-center justify-center w-full max-w-[320px] h-8 rounded bg-[#0f192b] border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300",
+                        phase === 'BETTING' ? 'shadow-[0_0_15px_rgba(251,191,36,0.15)]' : 
+                        phase === 'LOCKED' ? 'shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 
+                        'shadow-[0_0_15px_rgba(59,130,246,0.15)]'
+                      )}>
+                        <div className={cn(
+                          "flex items-center justify-center gap-2 z-10 font-display font-black text-[11px] uppercase tracking-widest",
+                          phase === 'BETTING' ? 'text-[#fbbf24]' : 
+                          phase === 'LOCKED' ? 'text-[#ef4444]' : 
+                          'text-[#3b82f6]'
+                        )}>
+                          <span>
+                            {phase === 'BETTING' ? 'PLACE YOUR BETS' : phase === 'LOCKED' ? 'WAITING FOR NEXT ROUND' : 'ELEVATOR MOVING'}
+                          </span>
+                          {phase === 'BETTING' && (
+                            <div className="flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded text-[10px]">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
+                              <span>{timer}s</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Progress Bar for Betting Phase */}
+                        {phase === 'BETTING' && (
+                          <div 
+                            className="absolute bottom-0 left-0 h-1 bg-[#fbbf24] transition-all duration-1000 ease-linear"
+                            style={{ width: `${(timer / 15) * 100}%` }}
+                          />
+                        )}
+                        
+                        {/* Static Bars for other phases */}
+                        {phase === 'LOCKED' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#ef4444]/60" />
+                        )}
+                        {phase === 'MOVING' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#3b82f6]/60" />
+                        )}
+                      </div>
+                    </div>
+
+                  <ElevatorPanel
+                    phaseLabel={phaseLabel}
+                    phase={phase}
+                    timer={timer}
+                    currentFloor={currentFloor}
+                    activeFloor={activeFloor}
+                    roundStops={roundStops}
+                    doorOpen={doorOpen}
+                    isDesktop={true}
+                    balance={balance}
+                    mobileHidden={false}
+                  />
+                </div>
 
                 <section className={cn('controls-right', 'desktop-only')}>
                   <ControlsPanel
@@ -735,11 +808,60 @@ function App() {
                 {mobileTab === 'game' && (
                   <div className={cn('flex', 'flex-col', 'flex-1', 'h-full', 'overflow-hidden')}>
                     
-                    <MobileHeader 
-                      timer={timer} 
-                      balance={balance} 
-                      onWalletClick={() => setWalletOpen(true)} 
-                    />
+                    <div className="bg-[#0c1524] border-b border-white/5 pb-1 flex-shrink-0">
+                      <MobileHeader 
+                        balance={balance} 
+                        onWalletClick={() => setWalletOpen(true)} 
+                      />
+                      
+                      <RoundHistoryBar history={history} />
+                    </div>
+
+                    {/* Timer Pill above the Elevator on Mobile */}
+                    <div className="flex justify-center my-1.5 flex-shrink-0 w-full px-4">
+                      <div className={cn(
+                        "relative flex flex-col items-center justify-center w-full max-w-[320px] h-8 rounded bg-[#0f192b] border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300",
+                        phase === 'BETTING' ? 'shadow-[0_0_15px_rgba(251,191,36,0.15)]' : 
+                        phase === 'LOCKED' ? 'shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 
+                        'shadow-[0_0_15px_rgba(59,130,246,0.15)]'
+                      )}>
+                        <div className={cn(
+                          "flex items-center justify-center gap-2 z-10 font-display font-black text-[11px] uppercase tracking-widest",
+                          phase === 'BETTING' ? 'text-[#fbbf24]' : 
+                          phase === 'LOCKED' ? 'text-[#ef4444]' : 
+                          'text-[#3b82f6]'
+                        )}>
+                          <span>
+                            {phase === 'BETTING' ? 'PLACE YOUR BETS' : phase === 'LOCKED' ? 'WAITING FOR NEXT ROUND' : 'ELEVATOR MOVING'}
+                          </span>
+                          {phase === 'BETTING' && (
+                            <div className="flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded text-[10px]">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
+                              <span>{timer}s</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Progress Bar for Betting Phase */}
+                        {phase === 'BETTING' && (
+                          <div 
+                            className="absolute bottom-0 left-0 h-1 bg-[#fbbf24] transition-all duration-1000 ease-linear"
+                            style={{ width: `${(timer / 15) * 100}%` }}
+                          />
+                        )}
+                        
+                        {/* Static Bars for other phases */}
+                        {phase === 'LOCKED' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#ef4444]/60" />
+                        )}
+                        {phase === 'MOVING' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#3b82f6]/60" />
+                        )}
+                      </div>
+                    </div>
 
                     <ElevatorPanel
                       phaseLabel={phaseLabel}

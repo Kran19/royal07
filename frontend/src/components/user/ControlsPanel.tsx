@@ -168,8 +168,7 @@ function ControlsPanel({
           >
             {!isPlaceBetDisabled ? (
               <>
-                <span className="btn-label">Bet</span>
-                <span className="btn-amount">₹{stake > 0 ? stake.toLocaleString('en-IN') : '—'}</span>
+                <span className="btn-label">Bet ₹{stake > 0 ? stake.toLocaleString('en-IN') : '—'}</span>
               </>
             ) : (
               <span className="btn-amount" style={{ fontSize: '0.82rem' }}>{betActionLabel}</span>
