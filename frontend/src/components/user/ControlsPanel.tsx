@@ -109,17 +109,7 @@ function ControlsPanel({
                   </button>
                 ))}
               </div>
-              <div className="pair-amount-row">
-                <label htmlFor="pair-amount">Amount</label>
-                <input
-                  id="pair-amount"
-                  className="pair-amount-input"
-                  inputMode="numeric"
-                  placeholder="e.g. 100"
-                  value={pairAmount}
-                  onChange={(e) => setPairAmount(e.target.value)}
-                />
-              </div>
+             
               {pairFloors.length > 0 && (
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', paddingLeft: '0.25rem' }}>
                   Selected: <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{pairFloors.join(', ')}</span>
@@ -188,7 +178,7 @@ function ControlsPanel({
         </div>
 
         {/* Quick-select chips (now below, so they don't stretch the bet button) */}
-        <div className="chip-row quick-chip-row">
+        <div className={cn('chip-row', 'quick-chip-row')}>
           {quickChips.map((value) => (
             <button
               key={value}

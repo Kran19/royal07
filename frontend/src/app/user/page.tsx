@@ -8,6 +8,7 @@ import ElevatorPanel from '@/components/user/ElevatorPanel';
 import MobileNav from '@/components/user/MobileNav';
 import { DesktopSidePanel } from '@/components/user/SidePanel';
 import TopBar from '@/components/user/TopBar';
+import { MobileHeader } from '@/components/user/MobileHeader';
 import WalletModal from '@/components/user/WalletModal';
 import MyBetsModal from '@/components/user/MyBetsModal';
 import WalletPanel from '@/components/user/WalletPanel';
@@ -733,6 +734,13 @@ function App() {
                 {/* Mobile Game Screen */}
                 {mobileTab === 'game' && (
                   <div className={cn('flex', 'flex-col', 'flex-1', 'h-full', 'overflow-hidden')}>
+                    
+                    <MobileHeader 
+                      timer={timer} 
+                      balance={balance} 
+                      onWalletClick={() => setWalletOpen(true)} 
+                    />
+
                     <ElevatorPanel
                       phaseLabel={phaseLabel}
                       phase={phase}

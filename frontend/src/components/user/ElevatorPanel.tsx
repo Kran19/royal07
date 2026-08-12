@@ -39,28 +39,12 @@ function ElevatorPanel({
     phase === 'MOVING' ? 'Waiting' : phaseLabel;
 
   return (
-    <section className={`panel game-panel ${mobileHidden ? 'mobile-hidden' : ''}`}>
-      {/* Status bar */}
-      <div className="status-row">
-        <span className={`phase-tag ${phaseClass}`}>{readableLabel}</span>
-
-        {/* Mobile inline balance */}
-        {!isDesktop && balance !== undefined && (
-          <span style={{ fontSize: '0.78rem', color: 'var(--gold)', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
-            ₹{balance.toLocaleString('en-IN')}
-          </span>
-        )}
-
-        <span className="timer">
-          {phase === 'MOVING' ? '🚀' : `${timer}s`}
-        </span>
-      </div>
-
+    <section className={`elevator-mockup-section ${mobileHidden ? 'mobile-hidden' : ''}`}>
       {/* Elevator visual */}
       <div className="elevator-wrap">
-        {/* Left indicators: odd floors */}
+        {/* Left indicators: even floors */}
         <aside className="indicator-col">
-          {FLOORS.filter((f) => f % 2 === 1)
+          {FLOORS.filter((f) => f % 2 === 0)
             .reverse()
             .map((floor) => (
               <div
@@ -82,9 +66,9 @@ function ElevatorPanel({
           </div>
         </div>
 
-        {/* Right indicators: even floors */}
+        {/* Right indicators: odd floors */}
         <aside className="indicator-col">
-          {FLOORS.filter((f) => f % 2 === 0)
+          {FLOORS.filter((f) => f % 2 === 1)
             .reverse()
             .map((floor) => (
               <div
@@ -98,10 +82,12 @@ function ElevatorPanel({
       </div>
 
       {/* Opened stops */}
-      <div className="target-row">
-        <span>Opened Stops</span>
-        <strong>{roundStops.length ? roundStops.join(', ') : '—'}</strong>
-      </div>
+      {/* {roundStops.length > 0 && (
+        <div className="opened-stops-row">
+          <span className="os-label">Opened Stops</span>
+          <span className="os-value">{roundStops.join(', ')}</span>
+        </div>
+      )} */}
     </section>
   );
 }
