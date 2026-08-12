@@ -46,21 +46,27 @@ function ElevatorPanel({
         <aside className="indicator-col">
           {FLOORS.filter((f) => f % 2 === 0)
             .reverse()
-            .map((floor) => (
-              <div
-                key={floor}
-                className={`indicator ${activeFloor === floor ? 'active' : ''} ${roundStops.includes(floor) ? 'hit' : ''}`}
-              >
-                {floor}
-              </div>
-            ))}
+            .map((floor) => {
+              const isHit = roundStops.includes(floor);
+              const isCurrentStop = activeFloor === floor && doorOpen;
+              return (
+                <div
+                  key={floor}
+                  className={`indicator ${activeFloor === floor && !isCurrentStop ? 'active' : ''} ${isHit || isCurrentStop ? 'hit' : ''}`}
+                >
+                  {floor}
+                </div>
+              );
+            })}
         </aside>
 
         {/* Center shaft */}
         <div className="elevator-core">
-          <div className="display">{currentFloor === 0 ? 'G' : currentFloor}</div>
+          <div className={`display ${doorOpen ? 'stopped-green' : ''}`}>
+            {currentFloor === 0 ? 'G' : currentFloor}
+          </div>
           <div className="shaft">
-            <div className="elevator-bg" />
+            <div className={`elevator-bg ${doorOpen ? 'stopped-green' : ''}`} />
             <div className={`door door-left ${doorOpen ? 'open' : ''}`} />
             <div className={`door door-right ${doorOpen ? 'open' : ''}`} />
           </div>
@@ -70,14 +76,18 @@ function ElevatorPanel({
         <aside className="indicator-col">
           {FLOORS.filter((f) => f % 2 === 1)
             .reverse()
-            .map((floor) => (
-              <div
-                key={floor}
-                className={`indicator ${activeFloor === floor ? 'active' : ''} ${roundStops.includes(floor) ? 'hit' : ''}`}
-              >
-                {floor}
-              </div>
-            ))}
+            .map((floor) => {
+              const isHit = roundStops.includes(floor);
+              const isCurrentStop = activeFloor === floor && doorOpen;
+              return (
+                <div
+                  key={floor}
+                  className={`indicator ${activeFloor === floor && !isCurrentStop ? 'active' : ''} ${isHit || isCurrentStop ? 'hit' : ''}`}
+                >
+                  {floor}
+                </div>
+              );
+            })}
         </aside>
       </div>
 
