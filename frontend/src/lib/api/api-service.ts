@@ -144,6 +144,69 @@ export const apiService = {
     return res.json();
   },
 
+  // --- Operator Management (Admin) ---
+  async getOperators(): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/list`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[] }): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/create`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  async getOperatorProfitSummary(): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/profit-summary`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async getOperatorTransactions(params?: { operatorId?: string, page?: number, limit?: number, status?: string, type?: string }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params) {
+      if (params.operatorId) query.append('operatorId', params.operatorId);
+      if (params.page) query.append('page', params.page.toString());
+      if (params.limit) query.append('limit', params.limit.toString());
+      if (params.status) query.append('status', params.status);
+      if (params.type) query.append('type', params.type);
+    }
+    const res = await fetch(`${API_BASE}/operator/transactions?${query.toString()}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async getOperatorStats(operatorId: string): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/${operatorId}/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async retryTransaction(txnId: string): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/transactions/${txnId}/retry`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async updateOperator(id: string, data: any): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
   async getProfitableOpenings(): Promise<ApiResponse<{ results: QuadProfitResult[]; totalProfitable: number }>> {
     const res = await fetch(`${API_BASE}/stats/profitable-openings`, {
       headers: this.getAuthHeaders(),

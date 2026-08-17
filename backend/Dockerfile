@@ -1,6 +1,6 @@
 # backend/Dockerfile
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY prisma ./prisma/
 RUN npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retries 5 && \
-    npm ci
+    npm install
 
 # Copy source code
 COPY . .
@@ -24,7 +24,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 

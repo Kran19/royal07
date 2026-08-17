@@ -12,6 +12,7 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule, {
       bodyParser: true,
+      rawBody: true, // Enable rawBody for RSA signature verification
     });
     
     // Increase body limits for large image uploads

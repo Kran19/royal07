@@ -240,7 +240,7 @@ export class WalletService {
       this.prisma.transaction.findMany({
         where,
         include: {
-          user: { select: { mobile: true } }
+          user: { select: { id: true, mobile: true, username: true } }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -266,7 +266,7 @@ export class WalletService {
     };
   }
 
-  async processTransaction(id: string, action: 'approve' | 'reject', adminNote?: string) {
+  async processTransaction(adminId: string, id: string, action: 'approve' | 'reject', adminNote?: string) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
       include: { user: true }
@@ -304,6 +304,16 @@ export class WalletService {
             }
           });
 
+          await tx.auditLog.create({
+            data: {
+              userId: adminId,
+              action: 'TRANSACTION_APPROVED',
+              targetType: 'TRANSACTION',
+              targetId: transaction.id,
+              details: JSON.stringify({ type: transaction.type, amount: Number(transaction.amount), note: adminNote })
+            }
+          });
+
           return { success: true, data: updated };
         } 
         
@@ -316,6 +326,17 @@ export class WalletService {
             settledAt: new Date()
           }
         });
+
+        await tx.auditLog.create({
+          data: {
+            userId: adminId,
+            action: 'TRANSACTION_APPROVED',
+            targetType: 'TRANSACTION',
+            targetId: transaction.id,
+            details: JSON.stringify({ type: transaction.type, amount: Number(transaction.amount), note: adminNote })
+          }
+        });
+
         return { success: true, data: updated };
 
       } else {
@@ -338,6 +359,16 @@ export class WalletService {
             status: 'FAILED',
             adminRemark: adminNote || 'Rejected by admin',
             settledAt: new Date()
+          }
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: adminId,
+            action: 'TRANSACTION_REJECTED',
+            targetType: 'TRANSACTION',
+            targetId: transaction.id,
+            details: JSON.stringify({ type: transaction.type, amount: Number(transaction.amount), note: adminNote || 'Rejected by admin' })
           }
         });
 

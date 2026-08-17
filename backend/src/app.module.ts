@@ -16,6 +16,7 @@ import { OpeningModule } from './modules/opening/opening.module';
 import { WorkerModule } from './workers/worker.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { OperatorModule } from './modules/operator/operator.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     OpeningModule,
     WorkerModule,
     SettingsModule,
+    OperatorModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',

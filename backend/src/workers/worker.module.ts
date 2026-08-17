@@ -4,6 +4,7 @@ import { EventProcessorWorker } from '../events/event-processor.worker';
 import { SettlementPersistenceWorker } from '../events/settlement-persistence.worker';
 import { EventsModule } from '../events/events.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { OperatorModule } from '../modules/operator/operator.module';
 
 /**
  * WorkerModule
@@ -21,8 +22,9 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    EventsModule,  // Provides EventStreamService
-    PrismaModule,  // Provides PrismaService
+    EventsModule,       // Provides EventStreamService
+    PrismaModule,       // Provides PrismaService
+    OperatorModule,     // Provides WalletCallbackService
   ],
   providers: [
     EventProcessorWorker,

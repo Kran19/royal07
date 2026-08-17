@@ -128,10 +128,12 @@ export class WalletController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseGuards(RolesGuard)
   async processTransaction(
+    @Req() req: Request,
     @Param('id') id: string,
     @Param('action') action: 'approve' | 'reject',
     @Body('adminNote') adminNote?: string
   ) {
-    return this.walletService.processTransaction(id, action, adminNote);
+    const adminId = (req.user as any).userId;
+    return this.walletService.processTransaction(adminId, id, action, adminNote);
   }
 }

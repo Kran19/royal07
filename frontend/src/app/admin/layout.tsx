@@ -8,12 +8,15 @@ const ROUTE_TITLES: Record<string, string> = {
   '/admin/dashboard': 'Dashboard',
   '/admin/users': 'User Management',
   '/admin/bets': 'Betting History',
-  '/admin/transactions': 'Financial Transactions',
+  '/admin/transactions': 'Transaction History',
   '/admin/rounds': 'Game Rounds',
-  '/admin/analytics': 'Platform Analytics',
+  '/admin/analytics': 'Advanced Analytics',
   '/admin/monitoring': 'Live System Monitoring',
-  '/admin/audit': 'Audit Logs',
-  '/admin/settings': 'System Settings',
+  '/admin/operators': 'Operators',
+  '/admin/operators/transactions': 'Operator Callback Logs',
+  '/admin/audit': 'System Audit Logs',
+  '/admin/settings': 'Platform Settings',
+  '/admin/wallet': 'Wallet Operations',
 };
 
 export default function AdminRootLayout({

@@ -7,6 +7,7 @@ import {
   CurrentRoundWidget,
 } from '@/components/admin/dashboard/DashboardWidgets';
 import { ProfitableOpenings } from '@/components/admin/dashboard/ProfitableOpenings';
+import { OperatorProfitWidget } from '@/components/admin/dashboard/OperatorProfitWidget';
 import { apiService } from '@/lib/api/api-service';
 import { BetStats, GameRound } from '@/types';
 import { FloorHeatmap } from '@/components/admin/dashboard/FloorHeatmap';
@@ -142,7 +143,10 @@ export default function DashboardPage() {
 
       <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-2')}>
         <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
-        <ProfitableOpenings />
+        <div className="space-y-6">
+          <ProfitableOpenings />
+          <OperatorProfitWidget />
+        </div>
       </div>
 
       {/* <div className="mt-8 rounded-[24px] bg-white dark:bg-slate-900/40 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-xl transition-colors">

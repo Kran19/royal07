@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { BetType, Prisma } from '@prisma/client';
+import { BetType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProfitCalculatorService } from '../opening/calculator/profit-calculator.service';

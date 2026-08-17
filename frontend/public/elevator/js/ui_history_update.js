@@ -28,4 +28,4 @@ renderHistory() {
         roundEl.appendChild(floorsContainer);
         container.appendChild(roundEl);
     });
-}
+};

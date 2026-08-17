@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventStreamService } from '../events/event-stream.service';
+import { WalletCallbackService } from '../modules/operator/wallet-callback.service';
 import {
   BetWonEvent,
   BetLostEvent,
@@ -40,6 +41,7 @@ export class SettlementPersistenceWorker {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventStream: EventStreamService,
+    private readonly walletCallback: WalletCallbackService,
   ) {}
 
   /**
@@ -191,7 +193,7 @@ export class SettlementPersistenceWorker {
     }
 
     // ─── Query 4: Update GameRound with final financial stats (1 query) ───
-    await this.prisma.gameRound.update({
+    const round = await this.prisma.gameRound.update({
       where: { id: roundId },
       data: {
         openingResult: roundClosedEvent.result,
@@ -205,10 +207,58 @@ export class SettlementPersistenceWorker {
     });
     this.logger.debug(`Q4 done: GameRound ${roundId} marked SETTLED`);
 
+    // ─── Q5: Fire Operator Wallet Callbacks for federated users (async, non-blocking) ───
+    this.fireOperatorCallbacks(wonEvents, roundId, round.roundNumber).catch(err =>
+      this.logger.error(`Operator callback error for round ${roundId}: ${err.message}`)
+    );
+
     const elapsed = Date.now() - startTime;
     this.logger.log(
       `Settlement persisted for round ${roundId} in ${elapsed}ms | ` +
       `Winners: ${wonEvents.length} | Losers: ${lostEvents.length}`
     );
+  }
+
+  /**
+   * Fires wallet callbacks for every federated (operator) user involved in the round.
+   * This runs asynchronously after DB writes so it never blocks settlement.
+   */
+  private async fireOperatorCallbacks(wonEvents: BetWonEvent[], roundId: string, roundNumber: number) {
+    if (wonEvents.length === 0) return;
+
+    // Fetch all federated users who won in this round
+    const userIds = [...new Set(wonEvents.map(ev => ev.userId))];
+    const federatedUsers = await this.prisma.user.findMany({
+      where: { id: { in: userIds }, operatorId: { not: null } },
+      include: { operator: true },
+    });
+
+    if (federatedUsers.length === 0) return;
+    this.logger.log(`Firing operator callbacks for ${federatedUsers.length} federated winners in round ${roundNumber}`);
+
+    for (const user of federatedUsers) {
+      const userWins = wonEvents.filter(ev => ev.userId === user.id);
+      // Find the active session token for this user to use in callback
+      const session = await this.prisma.userSession.findFirst({
+        where: { userId: user.id, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      for (const win of userWins) {
+        try {
+          await this.walletCallback.creditWin(
+            user.operatorId!,
+            user.operatorUserId!,
+            win.betId, // transactionId
+            roundId,
+            parseFloat(win.payout),
+            session?.token ?? '',
+            roundNumber,
+          );
+        } catch (err) {
+          this.logger.error(`Credit callback failed for user ${user.id} bet ${win.betId}: ${err.message}`);
+        }
+      }
+    }
   }
 }

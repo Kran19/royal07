@@ -31,14 +31,53 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   
+  // Platform / Operator Federation
+  operatorId     String?
+  operatorUserId String?
+  operator       Operator? @relation(fields: [operatorId], references: [id])
+  
   bets           Bet[]
   sessions       UserSession[]
   transactions   Transaction[]
   auditLogs      AuditLog[]
   
+  @@unique([operatorId, operatorUserId])
   @@index([mobile])
   @@index([role])
   @@index([isActive])
+}
+
+// B2B Operators / Platforms
+model Operator {
+  id              String   @id @default(cuid())
+  name            String
+  operatorId      String   @unique   // Short ID given to operator
+  publicKey       String   @db.Text  // PEM-format RSA public key
+  callbackUrl     String             // Their wallet API base URL
+  allowedIps      String[]           // IP whitelist
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  
+  users           User[]
+  transactions    OperatorTransaction[]
+}
+
+// B2B Operator Transactions (Callback Log)
+model OperatorTransaction {
+  id              String   @id @default(cuid())
+  operatorId      String
+  operator        Operator @relation(fields: [operatorId], references: [id])
+  userId          String   // We keep reference to the user ID
+  transactionId   String   @unique  // From our bet ID or settlement ID
+  roundId         String
+  type            String   // DEBIT | CREDIT | ROLLBACK | BALANCE_CHECK
+  amount          Decimal  @db.Decimal(18, 2)
+  status          String   // PENDING | SUCCESS | FAILED
+  retries         Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([operatorId, status])
 }
 
 // User sessions

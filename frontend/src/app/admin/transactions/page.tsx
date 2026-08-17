@@ -39,6 +39,20 @@ export default function TransactionsPage() {
     return () => clearTimeout(handler);
   }, [filters, search]);
 
+  const handleTransactionAction = async (id: string, action: 'approve' | 'reject') => {
+    if (!confirm(`Are you sure you want to ${action} this transaction?`)) return;
+    try {
+      const res = await apiService.processAdminTransaction(id, action);
+      if (res.success) {
+        fetchTransactions();
+      } else {
+        alert(res.error || `Failed to ${action} transaction`);
+      }
+    } catch (err) {
+      alert(`Error processing transaction`);
+    }
+  };
+
   const getTypeColor = (type: TransactionType) => {
     switch (type) {
       case TransactionType.DEPOSIT:
@@ -111,13 +125,21 @@ export default function TransactionsPage() {
         <TabulatorTable
           columns={[
             {
-              key: 'id',
-              label: 'ID',
-              sortable: true,
-              width: '160',
-              render: (v: any) => <code className="text-xs text-slate-400">{String(v).slice(-8).toUpperCase()}</code>
+              key: 'user',
+              label: 'User Info',
+              width: '240',
+              render: (v: any, row: any) => (
+                <div className="flex flex-col">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {row.user?.username || 'Unknown User'}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {row.user?.mobile || row.userId || 'No Mobile'}
+                  </span>
+                  <code className="text-[10px] text-slate-400 mt-0.5">{row.id}</code>
+                </div>
+              ),
             },
-            { key: 'userId', label: 'User', sortable: true, width: '180', render: (v: any) => String(v).slice(-8) },
             {
               key: 'type',
               label: 'Type',
@@ -172,6 +194,31 @@ export default function TransactionsPage() {
               label: 'Created',
               width: '160',
               render: (value: any) => new Date(value as Date).toLocaleTimeString(),
+            },
+            {
+              key: 'actions',
+              label: 'Actions',
+              width: '160',
+              hozAlign: 'center',
+              render: (v: any, row: any) => {
+                if (row.status !== TransactionStatus.PENDING) return <span className="text-slate-400 text-xs">-</span>;
+                return (
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleTransactionAction(row.id, 'approve')}
+                      className="px-2 py-1 bg-emerald-500/10 text-emerald-600 rounded hover:bg-emerald-500/20 text-xs font-semibold"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleTransactionAction(row.id, 'reject')}
+                      className="px-2 py-1 bg-rose-500/10 text-rose-600 rounded hover:bg-rose-500/20 text-xs font-semibold"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                );
+              }
             },
           ]}
           data={transactions}
