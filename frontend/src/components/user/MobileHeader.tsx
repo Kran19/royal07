@@ -6,7 +6,12 @@ interface MobileHeaderProps {
   onMenuClick?: () => void;
 }
 
+import { formatCurrency } from '@/lib/utils/currency';
+import { useAuth } from '@/context/AuthContext';
+
 export function MobileHeader({ balance, onWalletClick, onMenuClick }: MobileHeaderProps) {
+  const { user } = useAuth();
+  
   return (
     <div className="mobile-mock-top">
       {/* Header containing Logo on the left, Balance & Menu on the right */}
@@ -16,10 +21,11 @@ export function MobileHeader({ balance, onWalletClick, onMenuClick }: MobileHead
           ROYAL<span className="text-[#facc15]">07</span>
         </span>
 
+        {/* Right: Actions */}
         <div className="flex items-center gap-2.5">
           {/* Aviator-style compact green balance button */}
           <button className="mobile-mock-balance-btn" onClick={onWalletClick}>
-            <span className="balance-value">₹ {Number(balance).toFixed(2)}</span>
+            <span className="balance-value">{formatCurrency(Number(balance), user?.currency || 'INR', true)}</span>
           </button>
           
           {/* Menu Icon */}

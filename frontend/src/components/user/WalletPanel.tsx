@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from "../../lib/utils";
+import { formatCurrency } from '@/lib/utils/currency';
+import { useAuth } from '@/context/AuthContext';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -45,6 +47,7 @@ interface WalletPanelProps {
 }
 
 export default function WalletPanel({ token, balance, onBalanceChange, onLogout }: WalletPanelProps) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<WalletTab>('balance');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositStep, setDepositStep] = useState<'amount' | 'proof'>('amount');
@@ -223,7 +226,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
       {tab === 'balance' && (
         <div className={cn('rounded-[1.5rem]', 'bg-[#1d1f25]', 'p-10', 'text-center', 'border', 'border-white/5', 'shadow-2xl', 'mt-2')}>
           <p className={cn('text-sm', 'font-bold', 'uppercase', 'tracking-[0.15em]', 'text-[#b8951a]')}>Available Balance</p>
-          <p className={cn('mt-3', 'text-[3.25rem]', 'leading-none', 'font-bold', 'text-white', 'tracking-tight', 'font-display')}>₹{balance.toLocaleString()}</p>
+          <p className={cn('mt-3', 'text-[3.25rem]', 'leading-none', 'font-bold', 'text-white', 'tracking-tight', 'font-display')}>{formatCurrency(balance, user?.currency || 'INR', true)}</p>
 
           <button
             type="button"
@@ -318,7 +321,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
               )}
               <div>
                 <label className={cn('mb-2', 'block', 'text-[0.7rem]', 'font-bold', 'uppercase', 'tracking-[0.1em]', 'text-slate-400')}>
-                  AMOUNT (₹)
+                  AMOUNT ({user?.currency || 'INR'})
                 </label>
                 <input
                   type="number"
@@ -340,7 +343,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                         : 'bg-[#222530] text-slate-300 hover:bg-[#2a2e3b]'
                     }`}
                   >
-                    ₹{v}
+                    {formatCurrency(v, user?.currency || 'INR', true)}
                   </button>
                 ))}
               </div>
@@ -359,7 +362,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                 <svg className={cn('w-5', 'h-5', 'text-emerald-400', 'mt-0.5', 'shrink-0')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="leading-relaxed">Deposit request created for <span className={cn('font-bold', 'text-emerald-400', 'text-[0.95rem]')}>₹{depositAmount}</span>. Now upload your payment screenshot.</p>
+                <p className="leading-relaxed">Deposit request created for <span className={cn('font-bold', 'text-emerald-400', 'text-[0.95rem]')}>{formatCurrency(Number(depositAmount), user?.currency || 'INR', true)}</span>. Now upload your payment screenshot.</p>
               </div>
               <div>
                 <label className={cn('mb-2', 'block', 'text-[0.7rem]', 'font-bold', 'uppercase', 'tracking-[0.1em]', 'text-slate-400')}>
@@ -416,13 +419,13 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
         <div className={cn('space-y-5', 'mt-2')}>
           <div className={cn('rounded-[1.25rem]', 'bg-gradient-to-br', 'from-[#1e2230]', 'to-[#151822]', 'p-6', 'text-sm', 'border', 'border-[#2a2e40]', 'shadow-xl', 'flex', 'flex-col', 'items-center', 'text-center')}>
             <p className={cn('text-[0.7rem]', 'font-bold', 'uppercase', 'tracking-[0.15em]', 'text-slate-400', 'mb-2')}>Amount Available to Withdraw</p>
-            <p className={cn('text-3xl', 'font-bold', 'text-white', 'tracking-tight', 'mb-3')}>₹{balance.toLocaleString()}</p>
+            <p className={cn('text-3xl', 'font-bold', 'text-white', 'tracking-tight', 'mb-3')}>{formatCurrency(balance, user?.currency || 'INR', true)}</p>
             <div className={cn('w-12', 'h-1', 'bg-yellow-500/20', 'rounded-full', 'mb-3')} />
             <p className={cn('text-[0.75rem]', 'text-slate-400', 'font-medium', 'leading-relaxed', 'max-w-[80%]')}>Securely transfer your funds directly to your preferred bank account or UPI.</p>
           </div>
           <div>
             <label className={cn('mb-2', 'block', 'text-[0.7rem]', 'font-bold', 'uppercase', 'tracking-[0.1em]', 'text-slate-400')}>
-              AMOUNT (₹)
+              AMOUNT ({user?.currency || 'INR'})
             </label>
             <input
               type="number"
@@ -468,7 +471,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                   {history.deposits.map((d) => (
                     <div key={d.id} className={cn('mb-2', 'flex', 'items-center', 'justify-between', 'rounded-[1rem]', 'bg-[#1d1f25]', 'border', 'border-white/5', 'shadow-inner', 'px-5', 'py-3.5')}>
                       <div>
-                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>₹{d.amount.toLocaleString()}</p>
+                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>{formatCurrency(d.amount, user?.currency || 'INR', true)}</p>
                         <p className={cn('text-[0.7rem]', 'text-slate-400', 'mt-0.5')}>{new Date(d.createdAt).toLocaleDateString()}</p>
                         {(d as any).adminRemark && <p className={cn('mt-1', 'text-[10px]', 'text-rose-400', 'font-medium', 'italic')}>Remark: {(d as any).adminRemark}</p>}
                       </div>
@@ -484,7 +487,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                   {history.withdrawals.map((w) => (
                     <div key={w.id} className={cn('mb-2', 'flex', 'items-center', 'justify-between', 'rounded-[1rem]', 'bg-[#1d1f25]', 'border', 'border-white/5', 'shadow-inner', 'px-5', 'py-3.5')}>
                       <div>
-                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>₹{w.amount.toLocaleString()}</p>
+                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>{formatCurrency(w.amount, user?.currency || 'INR', true)}</p>
                         <p className={cn('text-[0.7rem]', 'text-slate-400', 'mt-0.5')}>{new Date(w.createdAt).toLocaleDateString()}</p>
                       </div>
                       <StatusPill status={w.status} />
@@ -499,7 +502,7 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
                   {history.transactions.map((t) => (
                     <div key={t.id} className={cn('mb-2', 'flex', 'items-center', 'justify-between', 'rounded-[1rem]', 'bg-[#1d1f25]', 'border', 'border-white/5', 'shadow-inner', 'px-5', 'py-3.5')}>
                       <div>
-                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>₹{t.amount.toLocaleString()} <span className={cn('text-xs', 'text-slate-500', 'font-medium', 'ml-1')}>({t.type})</span></p>
+                        <p className={cn('text-[0.95rem]', 'font-bold', 'text-white')}>{formatCurrency(t.amount, user?.currency || 'INR', true)} <span className={cn('text-xs', 'text-slate-500', 'font-medium', 'ml-1')}>({t.type})</span></p>
                         <p className={cn('text-[0.7rem]', 'text-slate-400', 'mt-0.5')}>{new Date(t.createdAt).toLocaleDateString()}</p>
                         {t.adminRemark && <p className={cn('mt-1', 'text-[10px]', 'text-yellow-500/80', 'italic', 'font-medium')}>{t.adminRemark}</p>}
                       </div>

@@ -8,7 +8,12 @@ interface TopBarProps {
   onLogout?: () => void;
 }
 
+import { formatCurrency } from '@/lib/utils/currency';
+import { useAuth } from '@/context/AuthContext';
+
 function TopBar({ balance, onWalletOpen, onMyBetsOpen, onMenuOpen, onLogout }: TopBarProps) {
+  const { user } = useAuth();
+  
   return (
     <header className="top-bar">
       <div className="brand-area">
@@ -19,7 +24,9 @@ function TopBar({ balance, onWalletOpen, onMyBetsOpen, onMenuOpen, onLogout }: T
       <div className="top-actions">
         <div className="balance-card">
           <span>Wallet</span>
-          <strong>₹{typeof balance === 'number' ? balance.toLocaleString('en-IN') : balance}</strong>
+          <strong onClick={onWalletOpen} className="cursor-pointer">
+            {formatCurrency(typeof balance === 'number' ? balance : 0, user?.currency || 'INR', true)}
+          </strong>
         </div>
 
         {onWalletOpen && (

@@ -152,7 +152,7 @@ export const apiService = {
     return res.json();
   },
 
-  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[] }): Promise<ApiResponse<any>> {
+  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[], revSharePercent?: number }): Promise<ApiResponse<any>> {
     const res = await fetch(`${API_BASE}/operator/create`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -299,6 +299,14 @@ export const apiService = {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ adminNote }),
+    });
+    return res.json();
+  },
+
+  // --- Generic REST Helpers ---
+  async get(path: string): Promise<any> {
+    const res = await fetch(`${API_BASE}${path.startsWith('/') ? path : `/${path}`}`, {
+      headers: this.getAuthHeaders(),
     });
     return res.json();
   },

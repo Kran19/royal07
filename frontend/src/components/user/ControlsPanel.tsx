@@ -33,6 +33,9 @@ interface ControlsPanelProps {
   betActionLabel: string;
 }
 
+import { formatCurrency } from '@/lib/utils/currency';
+import { useAuth } from '@/context/AuthContext';
+
 function ControlsPanel({
   mode, setMode,
   quickChips, quickAmount,
@@ -48,6 +51,8 @@ function ControlsPanel({
   autoEnabled, autoRounds, setAutoRounds, autoRoundsLeft, onToggleAuto,
   isPlaceBetDisabled, betActionLabel,
 }: ControlsPanelProps) {
+  const { user } = useAuth();
+  
   return (
     <section className={cn('panel', 'control-panel')}>
 
@@ -90,12 +95,14 @@ function ControlsPanel({
                   <span className="floor-text">
                     <span className="floor-prefix">F</span>{floor}
                   </span>
-                  {placedAmt ? (
-                    <span className="placed-chip">₹{placedAmt}</span>
-                  ) : draftAmt ? (
-                    <span className="draft-chip">₹{draftAmt}</span>
-                  ) : null}
-                </button>
+                  <div className="chip-stack">
+                  {placedAmt > 0 && (
+                    <span className="placed-chip">{formatCurrency(placedAmt, user?.currency || 'INR', true)}</span>
+                  )}
+                  {draftAmt > 0 && (
+                    <span className="draft-chip">{formatCurrency(draftAmt, user?.currency || 'INR', true)}</span>
+                  )}
+                </div></button>
               )})}
             </div>
           ) : (
@@ -172,9 +179,9 @@ function ControlsPanel({
             disabled={isPlaceBetDisabled}
           >
             {!isPlaceBetDisabled ? (
-              <>
-                <span className="btn-label">Bet ₹{stake > 0 ? stake.toLocaleString('en-IN') : '—'}</span>
-              </>
+              <div className="bet-btn-content">
+                <span className="btn-label">Bet {stake > 0 ? formatCurrency(stake, user?.currency || 'INR', true) : '—'}</span>
+              </div>
             ) : (
               <span className="btn-amount" style={{ fontSize: '0.82rem' }}>{betActionLabel}</span>
             )}
@@ -200,12 +207,12 @@ function ControlsPanel({
       <div className="summary">
         <div>
           <span>Total Stake</span>
-          <strong>₹{stake.toLocaleString('en-IN')}</strong>
+          <strong>{formatCurrency(stake, user?.currency || 'INR', true)}</strong>
         </div>
-        <div>
-          <span>Max Win</span>
-          <strong style={{ color: potentialWin > 0 ? 'var(--green)' : undefined }}>
-            ₹{potentialWin.toLocaleString('en-IN')}
+        <div className="summary-item">
+          <span className="label">Potential Win</span>
+          <strong className="text-[#10b981]">
+            {formatCurrency(potentialWin, user?.currency || 'INR', true)}
           </strong>
         </div>
       </div>
@@ -240,9 +247,9 @@ function ControlsPanel({
       {/* 7. ACTIVE BET TICKET (desktop only via CSS) */}
       {activeBet && (
         <div className="active-bet">
-          <div className="active-bet-head">
-            <span>Round Ticket</span>
-            <strong>₹{activeBet.stake?.toLocaleString('en-IN')}</strong>
+          <div className="ab-row">
+            <span className="ab-label">Stake</span>
+            <strong>{formatCurrency(activeBet.stake || 0, user?.currency || 'INR', true)}</strong>
           </div>
           <div className="active-bet-stats">
             <article>
@@ -256,15 +263,15 @@ function ControlsPanel({
           </div>
           <div className="active-bet-list">
             {Object.entries(activeBet.simpleFloorBets ?? {}).map(([floor, amount]: [string, any]) => (
-              <div key={`s-${floor}`} className="active-bet-row">
+              <div key={floor} className="ab-bet-item flex justify-between">
                 <span>Floor {floor}</span>
-                <strong>₹{amount}</strong>
+                <strong>{formatCurrency(amount, user?.currency || 'INR', true)}</strong>
               </div>
             ))}
             {(activeBet.pairBets ?? []).map((pb: any, i: number) => (
-              <div key={`p-${i}`} className="active-bet-row">
-                <span>Combo {pb.floors.join('+')} </span>
-                <strong>₹{pb.pairAmount}</strong>
+              <div key={i} className="ab-bet-item flex justify-between">
+                <span>Pair {pb.floors.join('-')}</span>
+                <strong>{formatCurrency(pb.pairAmount, user?.currency || 'INR', true)}</strong>
               </div>
             ))}
           </div>

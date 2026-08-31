@@ -17,6 +17,7 @@ model User {
   role           UserRole  @default(PLAYER)
   
   // Money fields changed to Decimal for precision
+  currency       String    @default("INR")
   balance        Decimal   @default(0) @db.Decimal(18, 2)
   totalBets      Int       @default(0)
   totalWon       Decimal   @default(0) @db.Decimal(18, 2)
@@ -56,6 +57,7 @@ model Operator {
   callbackUrl     String             // Their wallet API base URL
   allowedIps      String[]           // IP whitelist
   status          String   @default("ACTIVE")
+  revSharePercent Decimal  @default(10.0) @db.Decimal(5, 2)
   createdAt       DateTime @default(now())
   
   users           User[]
@@ -74,6 +76,7 @@ model OperatorTransaction {
   amount          Decimal  @db.Decimal(18, 2)
   status          String   // PENDING | SUCCESS | FAILED
   retries         Int      @default(0)
+  responseTimeMs  Int?     // API Latency
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
@@ -254,6 +257,7 @@ enum TransactionStatus {
 // Admin Settings
 model AdminSettings {
   id                  String   @id @default("default-settings")
+  baseCurrency        String   @default("INR") // Default system currency
   roundDuration       Int      @default(60)
   minBetAmount        Decimal  @default(10) @db.Decimal(18, 2)
   maxBetAmount        Decimal  @default(100000) @db.Decimal(18, 2)
@@ -290,4 +294,18 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([action])
   @@index([targetId])
+}
+
+// System Alerts (B2B Aggregator Command Center)
+model SystemAlert {
+  id          String   @id @default(cuid())
+  type        String   // e.g. "CRITICAL", "WARNING", "INFO"
+  message     String   @db.Text
+  source      String?  // e.g. "WEBHOOK_SERVICE", "FRAUD_ENGINE"
+  operatorId  String?  // If the alert is tied to a specific operator
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@index([operatorId])
 }

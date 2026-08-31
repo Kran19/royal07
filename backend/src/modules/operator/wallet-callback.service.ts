@@ -31,6 +31,7 @@ export class WalletCallbackService {
 
     while (attempts < maxRetries) {
       try {
+        const reqStartTime = performance.now();
         const response = await axios.post(url, body, {
           headers: {
             'Content-Type': 'application/json',
@@ -38,12 +39,13 @@ export class WalletCallbackService {
           },
           timeout: 5000 // 5 seconds per attempt
         });
+        const responseTimeMs = Math.round(performance.now() - reqStartTime);
 
         if (response.status === 200 && response.data.status === 'OP_SUCCESS') {
           // Success!
           await this.prisma.operatorTransaction.update({
             where: { transactionId },
-            data: { status: 'SUCCESS', retries: attempts }
+            data: { status: 'SUCCESS', retries: attempts, responseTimeMs }
           });
           return response.data;
         } else {
@@ -59,6 +61,14 @@ export class WalletCallbackService {
         });
 
         if (attempts >= maxRetries) {
+          await this.prisma.systemAlert.create({
+            data: {
+              type: 'CRITICAL',
+              message: `Operator Webhook failed after ${maxRetries} retries for txn ${transactionId}. URL: ${url}`,
+              source: 'WEBHOOK_SERVICE',
+              operatorId: body.operatorId
+            }
+          });
           throw new Error(`Max retries reached for transaction ${transactionId}`);
         }
         

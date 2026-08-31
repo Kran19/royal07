@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const internalBackendUrl = process.env.INTERNAL_BACKEND_URL || 'http://localhost:4000';
+const internalBackendUrl = process.env.INTERNAL_BACKEND_URL || 'http://127.0.0.1:4000';
 
 const nextConfig: NextConfig = {
   async redirects() {

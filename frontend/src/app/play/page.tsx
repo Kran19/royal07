@@ -3,7 +3,6 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-
 function PlayLauncher() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -12,7 +11,7 @@ function PlayLauncher() {
   useEffect(() => {
     if (sessionToken) {
       // For federated seamless launch, we store the session token exactly as if the user logged in
-      localStorage.setItem('royalbet_token', sessionToken);
+      localStorage.setItem('auth_token', sessionToken);
       
       // Redirect to the main game interface
       router.replace('/user');

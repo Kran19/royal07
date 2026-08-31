@@ -9,6 +9,7 @@ class CreateOperatorDto {
   publicKey: string;
   callbackUrl: string;
   allowedIps?: string[];
+  revSharePercent?: number;
 }
 
 @Controller('operator')

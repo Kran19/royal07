@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Users, Activity, IndianRupee, TrendingUp, TrendingDown, Clock, Layers, Power } from 'lucide-react';
 import { Bet, BetStatus, GameRound, BetType } from '@/types';
 
+import { formatCurrency } from '@/lib/utils/currency';
+
 interface KPIWidgetProps {
   stats: {
     totalUsers: number;
@@ -19,9 +21,10 @@ interface KPIWidgetProps {
     totalWithdrawals: number;
   };
   loading?: boolean;
+  currency?: string;
 }
 
-function ReferenceStatCard({ title, subtitle, value, bgColor, textColor, isCurrency, loading }: any) {
+function ReferenceStatCard({ title, subtitle, value, bgColor, textColor, isCurrency, loading, currency = 'INR' }: any) {
   return (
     <div className={`relative flex flex-col justify-between p-6 h-[200px] rounded-[24px] ${bgColor} transition-transform hover:-translate-y-1`}>
       <div>
@@ -32,8 +35,8 @@ function ReferenceStatCard({ title, subtitle, value, bgColor, textColor, isCurre
         {loading ? (
           <div className="h-10 w-24 animate-pulse rounded-lg bg-black/10 dark:bg-white/10" />
         ) : (
-          <h2 className="text-4xl font-black text-slate-900 dark:text-white">
-            {isCurrency ? `₹${(value || 0).toLocaleString()}` : (value || 0).toLocaleString()}
+          <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            {isCurrency ? formatCurrency(value || 0, currency, true) : (value || 0).toLocaleString()}
           </h2>
         )}
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg cursor-pointer hover:scale-105 transition-transform">
@@ -46,30 +49,33 @@ function ReferenceStatCard({ title, subtitle, value, bgColor, textColor, isCurre
   );
 }
 
-export function KPIWidget({ stats, loading }: KPIWidgetProps) {
+export function KPIWidget({ stats, loading, currency = 'INR' }: KPIWidgetProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 col-span-1 lg:col-span-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
       <ReferenceStatCard
         title="Total Bets"
         subtitle="Today's total interaction"
         value={stats.totalBetsToday}
         bgColor="bg-[#fef3c7] dark:bg-amber-500/10"
         loading={loading}
+        currency={currency}
       />
       <ReferenceStatCard
         title="Active Users"
-        subtitle="Currently online"
+        subtitle="Currently playing"
         value={stats.activeUsers}
-        bgColor="bg-[#e0f2fe] dark:bg-sky-500/10"
+        bgColor="bg-[#e0e7ff] dark:bg-indigo-500/10"
         loading={loading}
+        currency={currency}
       />
       <ReferenceStatCard
         title="House Profit"
-        subtitle="Today's performance"
+        subtitle="Today's net earnings"
         value={stats.profitLossToday}
-        bgColor="bg-[#f1f5f9] dark:bg-slate-800/50"
-        isCurrency
+        bgColor="bg-[#dcfce7] dark:bg-emerald-500/10"
+        isCurrency={true}
         loading={loading}
+        currency={currency}
       />
     </div>
   );

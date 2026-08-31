@@ -8,6 +8,10 @@ import {
 } from '@/components/admin/dashboard/DashboardWidgets';
 import { ProfitableOpenings } from '@/components/admin/dashboard/ProfitableOpenings';
 import { OperatorProfitWidget } from '@/components/admin/dashboard/OperatorProfitWidget';
+import { OperatorHealthWidget } from '@/components/admin/dashboard/OperatorHealthWidget';
+import { GGRLeaderboardWidget } from '@/components/admin/dashboard/GGRLeaderboardWidget';
+import { SystemAlertsFeed } from '@/components/admin/dashboard/SystemAlertsFeed';
+import { SettlementWidget } from '@/components/admin/dashboard/SettlementWidget';
 import { apiService } from '@/lib/api/api-service';
 import { BetStats, GameRound } from '@/types';
 import { FloorHeatmap } from '@/components/admin/dashboard/FloorHeatmap';
@@ -123,40 +127,64 @@ export default function DashboardPage() {
     totalWithdrawals: 0,
   };
 
+  const [currency, setCurrency] = useState('INR');
+
   return (
     <div className={cn('space-y-8', 'pb-12')}>
-      <div>
-        <h1 className={cn('text-[32px]', 'font-black', 'text-slate-900', 'dark:text-white', 'tracking-normal')}>
-          Hello Admin
-        </h1>
-        <p className={cn('text-sm', 'font-medium', 'text-slate-500', 'dark:text-slate-400', 'mt-1')}>
-          Monitor performance and operations in real time.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className={cn('text-[32px]', 'font-black', 'text-slate-900', 'dark:text-white', 'tracking-normal')}>
+            Hello Admin
+          </h1>
+          <p className={cn('text-sm', 'font-medium', 'text-slate-500', 'dark:text-slate-400', 'mt-1')}>
+            Monitor performance and operations in real time.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">Currency Filter</label>
+          <select 
+            value={currency} 
+            onChange={e => setCurrency(e.target.value)}
+            className="bg-white dark:bg-[#1d1f25] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-sm font-bold shadow-sm focus:ring-2 focus:ring-[#b8951a] outline-none transition-all"
+          >
+            <option value="INR">INR</option>
+            <option value="USDT">USDT</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
       </div>
 
-      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-4')}>
-        <KPIWidget stats={kpiStats} loading={loading} />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+        <div className="xl:col-span-3">
+          <KPIWidget stats={kpiStats} loading={loading} currency={currency} />
+        </div>
+        <div className="col-span-1 flex flex-col gap-6">
+          <div className="flex-1 min-h-0">
+            <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
+          </div>
+          <div className="flex-1 min-h-0">
+            <SettlementWidget currency={currency} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <OperatorHealthWidget />
+        </div>
         <div className="col-span-1">
-          <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
+          <SystemAlertsFeed />
         </div>
       </div>
 
-      <div className={cn('grid', 'grid-cols-1', 'gap-6', 'lg:grid-cols-2')}>
-        <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <GGRLeaderboardWidget currency={currency} />
         <div className="space-y-6">
-          <ProfitableOpenings />
-          <OperatorProfitWidget />
+          <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
         </div>
       </div>
-
-      {/* <div className="mt-8 rounded-[24px] bg-white dark:bg-slate-900/40 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-xl transition-colors">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Platform Health</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <HealthMetric label="Aggregation Engine" status="Optimal" />
-          <HealthMetric label="WebSocket Gateway" status="Connected" />
-          <HealthMetric label="TimescaleDB Latency" status="< 2ms" />
-        </div>
-      </div> */}
     </div>
   );
 }

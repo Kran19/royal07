@@ -17,6 +17,7 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
     operatorId: '',
     callbackUrl: '',
     publicKey: '',
+    revSharePercent: 10,
   });
 
   if (!isOpen) return null;
@@ -27,7 +28,10 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
     setLoading(true);
 
     try {
-      const res = await apiService.createOperator(formData);
+      const res = await apiService.createOperator({
+        ...formData,
+        revSharePercent: Number(formData.revSharePercent)
+      });
       if (res.success) {
         onSuccess();
         onClose();
@@ -47,7 +51,7 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
       <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Register New Operator</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -84,16 +88,32 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-900 dark:text-slate-200">Callback API URL</label>
-            <input 
-              required
-              type="url"
-              value={formData.callbackUrl}
-              onChange={e => setFormData({ ...formData, callbackUrl: e.target.value })}
-              placeholder="e.g. https://api.dreamdelhi.com/wallet"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-200">Callback API URL</label>
+              <input 
+                required
+                type="url"
+                value={formData.callbackUrl}
+                onChange={e => setFormData({ ...formData, callbackUrl: e.target.value })}
+                placeholder="e.g. https://api.dreamdelhi.com/wallet"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-200">Revenue Share (%)</label>
+              <input 
+                required
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={formData.revSharePercent}
+                onChange={e => setFormData({ ...formData, revSharePercent: parseFloat(e.target.value) || 0 })}
+                placeholder="e.g. 10.0"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

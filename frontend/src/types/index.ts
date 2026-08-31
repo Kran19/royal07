@@ -23,6 +23,7 @@ export interface User {
   lastName: string;
   status: UserStatus;
   kycStatus: UserKYCStatus;
+  currency: string;
   avatar?: string;
   totalBets: number;
   totalWon: number;

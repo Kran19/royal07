@@ -3,18 +3,55 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'crypto';
 import { WalletCallbackService } from './wallet-callback.service';
 
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber } from 'class-validator';
+
 export class LoginOperatorDto {
+  @IsString()
+  @IsNotEmpty()
   operatorId: string;
+
+  @IsString()
+  @IsNotEmpty()
   userId: string;
-  platformId?: string;
-  currency?: string;
-  clientIp?: string;
-  username?: string;
-  lobby?: boolean;
-  gameId?: string;
-  balance?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  platformId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  currency: string;
+
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @IsBoolean()
+  @IsOptional()
+  lobby: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  gameId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  clientIp: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  balance: number;
+
+  @IsString()
+  @IsOptional()
+  redirectUrl: string;
+
+  @IsString()
+  @IsOptional()
   subOperatorId?: string;
-  redirectUrl?: string;
+
+  @IsString()
+  @IsOptional()
   partnerId?: string;
 }
 
@@ -26,7 +63,7 @@ export class OperatorService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => WalletCallbackService))
     private walletCallbackService: WalletCallbackService
-  ) {}
+  ) { }
 
   async processOperatorLogin(data: LoginOperatorDto) {
     this.logger.log(`Processing operator login for operator=${data.operatorId} user=${data.userId}`);
@@ -56,10 +93,11 @@ export class OperatorService {
         data: {
           operatorId: operator.id,
           operatorUserId: data.userId,
-          username: data.username ?? `Player_${data.userId}`,
+          username: data.username,
           mobile: fakeMobile,
           passwordHash: 'FEDERATED_NO_PASSWORD',
-          balance: data.balance ?? 0,
+          balance: data.balance,
+          currency: data.currency,
         },
       });
       this.logger.log(`Created federated user ${user.id} for operator ${operator.operatorId}`);
@@ -67,7 +105,10 @@ export class OperatorService {
       // Sync balance from operator (their wallet is source of truth)
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { balance: data.balance ?? 0 },
+        data: {
+          balance: data.balance,
+          currency: data.currency
+        },
       });
     }
 
@@ -108,7 +149,7 @@ export class OperatorService {
     });
   }
 
-  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[] }) {
+  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[], revSharePercent?: number }) {
     // Basic format check for public key
     if (!data.publicKey.includes('BEGIN PUBLIC KEY') && !data.publicKey.includes('BEGIN RSA PUBLIC KEY')) {
       throw new Error('Public key must be in PEM format (e.g. -----BEGIN PUBLIC KEY-----...)');
@@ -121,6 +162,7 @@ export class OperatorService {
         publicKey: data.publicKey.trim(),
         callbackUrl: data.callbackUrl,
         allowedIps: data.allowedIps || [],
+        ...(data.revSharePercent !== undefined ? { revSharePercent: data.revSharePercent } : {})
       }
     });
   }
@@ -257,7 +299,7 @@ export class OperatorService {
       orderBy: { createdAt: 'desc' }
     });
     const token = userSession ? userSession.token : 'retry-token';
-    
+
     // We don't have roundNumber directly on txn, we'd have to look it up via roundId
     const round = await this.prisma.gameRound.findUnique({ where: { id: txn.roundId } });
     const roundNumber = round ? round.roundNumber : 0;

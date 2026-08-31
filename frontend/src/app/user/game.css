@@ -792,9 +792,17 @@
 }
 
 @keyframes pulse-draft {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
-  70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+
+  70% {
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 /* =============================================
@@ -1544,7 +1552,7 @@
   }
 
   .mobile-controls {
-    flex: 2;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -1556,37 +1564,31 @@
      Each row sizes to its content — zero hardcoded heights fighting each other.
      ============================================================ */
   .control-panel {
-    display: grid !important;
-    /* auto = size to content, 1fr = absorb all leftover space */
-    grid-template-rows:
-      auto
-      /* mode toggle pill */
-      1fr
-      /* floor buttons — grows/shrinks to fill remaining space */
-      auto
-      /* stepper + bet button */
-      auto
-      /* chip presets */
-      auto
-      /* total stake / max win */
-      auto;
-    /* auto play row */
+    display: flex !important;
+    flex-direction: column;
     gap: 8px !important;
     padding: 10px !important;
     overflow: hidden;
+    flex: 0 0 auto;
+    height: auto !important;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  /* First group (Floor selectors) grows to fill space */
+  .control-group:first-of-type {
     flex: 1;
     min-height: 0;
   }
 
-  /* Transparent wrappers — children participate directly in parent grid */
-  .control-group {
-    display: contents;
-  }
-
-  /* ── Mode toggle ── */
-  .mode-row {
-    /* auto-sized: sized by mode-btn height */
-    align-self: stretch;
+  /* Second group (Stake & Bet) stays compact */
+  .control-group:nth-of-type(2) {
+    flex-shrink: 0;
   }
 
   .mode-btn {
@@ -1599,13 +1601,12 @@
     display: none;
   }
 
-  /* ── Floor grid ── fills 1fr row */
   .floor-section {
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-height: 0;
     overflow: visible;
-    /* Ensure placed badges aren't clipped */
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 10px;
@@ -1614,6 +1615,9 @@
   }
 
   .bet-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: 1fr 1fr;
     flex: 1;
     min-height: 0;
     gap: 5px !important;
@@ -2003,47 +2007,37 @@
   align-items: stretch;
   justify-content: center;
   width: 100%;
-  margin-top: 6px;
-  /* Added spacing from history bar */
-  margin-bottom: 10px;
-  /* Reduced from 20px */
+  margin-top: 2px;
+  margin-bottom: 4px;
+  flex: 1 1 auto;
+  min-height: 160px;
 }
 
 .elevator-mockup-section .elevator-wrap {
   width: 100%;
   max-width: 100%;
-  height: 340px;
-  /* Exact height to match image proportions */
+  height: 100%;
   display: grid;
   grid-template-columns: 50px 1fr 50px;
   gap: 12px;
   align-items: stretch;
 }
 
-@media (min-width: 768px) {
-  .elevator-mockup-section {
-    flex: 1;
-    height: 100%;
-  }
-  .elevator-mockup-section .elevator-wrap {
-    height: 100%;
-  }
-}
-
 .elevator-mockup-section .indicator-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: stretch;
+  gap: 4px;
   height: 100%;
 }
 
 .elevator-mockup-section .indicator {
-  height: 32px;
+  flex: 1;
+  min-height: 0;
   border: 1px solid #ffffff;
   background: transparent;
   color: #ffffff;
   border-radius: 0 !important;
-  /* Sharp corners */
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -2068,20 +2062,25 @@
   border: 1px solid #fff;
   border-radius: 0;
   padding: 0;
-  /* Remove padding entirely */
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .elevator-mockup-section .display {
   color: #ff0000;
-  font-size: 2rem;
-  padding: 8px 0;
+  font-size: 1.3rem;
+  padding: 3px 0;
   position: relative;
   border-radius: 0 !important;
-  /* Sharp corners */
   border: 1px solid #333;
   transition: color 0.3s ease;
+  flex-shrink: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .elevator-mockup-section .display.stopped-green {
@@ -2090,17 +2089,18 @@
 
 .elevator-mockup-section .shaft {
   border-radius: 0 !important;
-  /* Sharp corners */
   border: 1px solid #333;
+  flex: 1;
+  min-height: 0;
 }
 
 .elevator-mockup-section .display::before {
   content: "∧";
   position: absolute;
-  left: 12px;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   color: #ff0000;
   transition: color 0.3s ease;
 }
@@ -2108,10 +2108,10 @@
 .elevator-mockup-section .display::after {
   content: "∨";
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   color: #333;
   transition: color 0.3s ease;
 }
@@ -2156,4 +2156,45 @@
   /* IE and Edge */
   scrollbar-width: none;
   /* Firefox */
+}
+
+@media (min-width: 768px) {
+  .elevator-mockup-section {
+    flex: 1;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin-top: 6px;
+    margin-bottom: 10px;
+  }
+
+  .elevator-mockup-section .elevator-wrap {
+    height: 100%;
+    gap: 16px;
+  }
+
+  .elevator-mockup-section .display {
+    height: clamp(50px, 7vh, 70px) !important;
+    font-size: 2.5rem !important;
+    padding: 0 !important;
+  }
+
+  .elevator-mockup-section .display::before {
+    font-size: 1.4rem !important;
+    left: 20px !important;
+  }
+
+  .elevator-mockup-section .display::after {
+    font-size: 1.4rem !important;
+    right: 20px !important;
+  }
+
+  .elevator-mockup-section .indicator {
+    max-height: 34px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .elevator-mockup-section .indicator-col {
+    gap: 6px !important;
+  }
 }

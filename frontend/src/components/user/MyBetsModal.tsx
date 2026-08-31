@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currency';
+import { useAuth } from '@/context/AuthContext';
 
 interface MyBetsModalProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface MyBetsModalProps {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function MyBetsModal({ isOpen, onClose, token }: MyBetsModalProps) {
+  const { user } = useAuth();
   const isDesktop = useMediaQuery('(min-width: 1025px)');
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,21 +92,23 @@ export default function MyBetsModal({ isOpen, onClose, token }: MyBetsModalProps
                   </div>
                   
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex flex-col gap-1">
-                      <div className="text-xs text-slate-400">Bet Amount</div>
-                      <div className="text-sm text-white font-mono font-bold">₹{Number(bet.amount).toFixed(2)}</div>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-sm font-bold text-slate-300">Stake</div>
+                      <div className="text-sm text-white font-mono font-bold">{formatCurrency(bet.amount, user?.currency || 'INR', true)}</div>
                     </div>
                     
                     <div className="flex flex-col gap-1 items-end">
                       <div className="text-xs text-slate-400">Payout</div>
-                      {isSettled ? (
-                        isWin ? (
-                          <div className="text-sm text-[#5cb83d] font-mono font-bold flex items-center gap-1">
-                            +₹{Number(bet.settlementAmount).toFixed(2)}
+                      {bet.status === 'WON' ? (
+                        <div className="flex items-center gap-1 text-emerald-400">
+                          <div className="text-sm font-mono font-bold">
+                            +{formatCurrency(bet.settlementAmount, user?.currency || 'INR', true)}
                           </div>
-                        ) : (
-                          <div className="text-sm text-slate-500 font-mono font-bold">-₹{Number(bet.amount).toFixed(2)}</div>
-                        )
+                        </div>
+                      ) : bet.status === 'LOST' ? (
+                        <div className="flex items-center gap-1 text-rose-400">
+                          <div className="text-sm text-slate-500 font-mono font-bold">-{formatCurrency(bet.amount, user?.currency || 'INR', true)}</div>
+                        </div>
                       ) : (
                         <div className="text-sm text-yellow-400 font-mono font-bold animate-pulse">Pending...</div>
                       )}
