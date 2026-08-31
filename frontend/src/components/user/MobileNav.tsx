@@ -52,7 +52,10 @@ interface MobileNavProps {
   onLogout?: () => void;
 }
 
+import { useAuth } from '@/context/AuthContext';
+
 function MobileNav({ tab, setTab }: MobileNavProps) {
+  const { user } = useAuth();
   return (
     <nav className="mobile-nav">
       <button type="button" onClick={() => setTab('game')} className={tab === 'game' ? 'on nav-item' : 'nav-item'}>
@@ -67,10 +70,12 @@ function MobileNav({ tab, setTab }: MobileNavProps) {
         <span className="nav-icon"><NavIcon type="history" /></span>
         <span className="nav-label">History</span>
       </button>
-      <button type="button" onClick={() => setTab('wallet')} className={tab === 'wallet' ? 'on nav-item' : 'nav-item'}>
-        <span className="nav-icon"><NavIcon type="wallet" /></span>
-        <span className="nav-label">Wallet</span>
-      </button>
+      {(!user?.operatorId) && (
+        <button type="button" onClick={() => setTab('wallet')} className={tab === 'wallet' ? 'on nav-item' : 'nav-item'}>
+          <span className="nav-icon"><NavIcon type="wallet" /></span>
+          <span className="nav-label">Wallet</span>
+        </button>
+      )}
     </nav>
   )
 }

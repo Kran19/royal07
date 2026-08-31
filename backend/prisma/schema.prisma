@@ -57,7 +57,6 @@ model Operator {
   callbackUrl     String             // Their wallet API base URL
   allowedIps      String[]           // IP whitelist
   status          String   @default("ACTIVE")
-  revSharePercent Decimal  @default(10.0) @db.Decimal(5, 2)
   createdAt       DateTime @default(now())
   
   users           User[]

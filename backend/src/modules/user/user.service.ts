@@ -20,7 +20,8 @@ export class UserService {
         balance: true,
         totalBets: true,
         totalWon: true,
-        createdAt: true
+        createdAt: true,
+        operatorId: true
       }
     });
 

@@ -24,12 +24,15 @@ function TopBar({ balance, onWalletOpen, onMyBetsOpen, onMenuOpen, onLogout }: T
       <div className="top-actions">
         <div className="balance-card">
           <span>Wallet</span>
-          <strong onClick={onWalletOpen} className="cursor-pointer">
+          <strong 
+            onClick={user?.operatorId ? undefined : onWalletOpen} 
+            className={user?.operatorId ? "" : "cursor-pointer"}
+          >
             {formatCurrency(typeof balance === 'number' ? balance : 0, user?.currency || 'INR', true)}
           </strong>
         </div>
 
-        {onWalletOpen && (
+        {onWalletOpen && !user?.operatorId && (
           <button
             type="button"
             className="top-wallet-btn"

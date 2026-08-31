@@ -12,6 +12,8 @@ import { JwtService } from '@nestjs/jwt';
 import { Logger } from '@nestjs/common';
 import { GameLifecycleService, GamePhase } from '../game/game-lifecycle.service';
 
+import { PrismaService } from '../../prisma/prisma.service';
+
 @WebSocketGateway({
   cors: { origin: '*' },
 })
@@ -22,7 +24,8 @@ export class BetGateway {
   constructor(
     private readonly betService: BetService,
     private readonly jwtService: JwtService,
-    private readonly gameLifecycleService: GameLifecycleService
+    private readonly gameLifecycleService: GameLifecycleService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @SubscribeMessage('place_bet')
@@ -45,15 +48,35 @@ export class BetGateway {
         return;
       }
 
-      // 3. Verify Token
-      const payload = this.jwtService.verify(token);
-      if (!payload || !payload.sub) {
-        client.emit('bet_rejected', { message: 'Invalid token.' });
-        return;
+      let userId: string;
+
+      // 3. Verify Token: Check if it is a B2B UUID Session Token
+      if (token.length === 36 && token.includes('-')) {
+        const session = await this.prisma.userSession.findFirst({
+          where: {
+            token: token,
+            expiresAt: { gt: new Date() }
+          },
+          include: { user: true }
+        });
+
+        if (!session || !session.user) {
+          client.emit('bet_rejected', { message: 'Session expired or invalid.' });
+          return;
+        }
+        userId = session.user.id;
+      } else {
+        // Fallback: Verify standard B2C JWT
+        const payload = this.jwtService.verify(token);
+        if (!payload || !payload.sub) {
+          client.emit('bet_rejected', { message: 'Invalid token.' });
+          return;
+        }
+        userId = payload.sub;
       }
 
       // 4. Place Bet
-      const result = await this.betService.placeBet(payload.sub, data);
+      const result = await this.betService.placeBet(userId, data);
 
       // 5. Broadcast to all (Social Feed)
       if (this.server) {

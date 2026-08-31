@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'crypto';
 import { WalletCallbackService } from './wallet-callback.service';
+import { EventStreamService } from '../../events/event-stream.service';
 
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
@@ -61,6 +62,7 @@ export class OperatorService {
 
   constructor(
     private prisma: PrismaService,
+    private eventStream: EventStreamService,
     @Inject(forwardRef(() => WalletCallbackService))
     private walletCallbackService: WalletCallbackService
   ) { }
@@ -110,6 +112,12 @@ export class OperatorService {
           currency: data.currency
         },
       });
+
+      // ⚡ Force-overwrite Redis balance so the player immediately sees
+      // their current balance (including any deposits made on operator platform
+      // since the last session). seedUserBalance uses NX and would be ignored.
+      await this.eventStream.forceSetBalance(user.id, data.balance.toFixed(2));
+      this.logger.log(`Synced Redis balance for returning user ${user.id}: ${data.balance}`);
     }
 
     // Create a standard UserSession so the game front-end can use it
@@ -149,7 +157,7 @@ export class OperatorService {
     });
   }
 
-  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[], revSharePercent?: number }) {
+  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[] }) {
     // Basic format check for public key
     if (!data.publicKey.includes('BEGIN PUBLIC KEY') && !data.publicKey.includes('BEGIN RSA PUBLIC KEY')) {
       throw new Error('Public key must be in PEM format (e.g. -----BEGIN PUBLIC KEY-----...)');
@@ -162,7 +170,6 @@ export class OperatorService {
         publicKey: data.publicKey.trim(),
         callbackUrl: data.callbackUrl,
         allowedIps: data.allowedIps || [],
-        ...(data.revSharePercent !== undefined ? { revSharePercent: data.revSharePercent } : {})
       }
     });
   }

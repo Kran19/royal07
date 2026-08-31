@@ -152,7 +152,7 @@ export const apiService = {
     return res.json();
   },
 
-  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[], revSharePercent?: number }): Promise<ApiResponse<any>> {
+  async createOperator(data: { name: string, operatorId: string, publicKey: string, callbackUrl: string, allowedIps?: string[] }): Promise<ApiResponse<any>> {
     const res = await fetch(`${API_BASE}/operator/create`, {
       method: 'POST',
       headers: this.getAuthHeaders(),

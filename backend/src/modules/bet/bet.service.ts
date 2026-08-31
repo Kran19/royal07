@@ -12,6 +12,7 @@ import { BetStatus, BetType } from '@prisma/client';
 import { EventStreamService } from '../../events/event-stream.service';
 import { BetPlacedEvent, EventType, LuaBetResult, RedisKeys } from '../../events/event.types';
 import * as crypto from 'crypto';
+import { WalletCallbackService } from '../operator/wallet-callback.service';
 
 @Injectable()
 export class BetService {
@@ -19,6 +20,7 @@ export class BetService {
     private prisma: PrismaService,
     private settingsService: SettingsService,
     private eventStream: EventStreamService,
+    private walletCallback: WalletCallbackService,
   ) {}
 
   /**
@@ -151,7 +153,36 @@ export class BetService {
     // Total exposure = actual money deducted from user (for totalStake tracking)
     exposureFields.push({ field: 'total', inc: totalDeducted.toFixed(2) });
 
-    // ── 6. Execute Atomic Lua Script ──────────────────────────────────
+    // ── 6. ⚡ OPERATOR WALLET AUTH — MUST SUCCEED BEFORE REDIS DEDUCTION ──
+    // For B2B federated users: call the operator's /betrequest synchronously.
+    // If the operator declines (INSUFFICIENT_FUNDS, USER_NOT_FOUND, timeout),
+    // the bet is rejected immediately. No money moves in Redis.
+    // For B2C users (no operatorId): this is a no-op and returns { success: true }.
+    const operatorAuth = await this.walletCallback.debitBetSync(
+      userId,
+      eventId,               // use eventId as the idempotent transactionId
+      activeRoundId,
+      totalDeducted.toNumber(),
+      '',                    // session token — populated from UserSession if needed
+      0,                     // roundNumber not available here; worker resolves it
+    );
+
+    if (!operatorAuth.success) {
+      const statusMap: Record<string, { code: string; message: string }> = {
+        'INSUFFICIENT_FUNDS':   { code: 'BET_001', message: 'Insufficient balance on your account' },
+        'DUPLICATE_TRANSACTION':{ code: 'BET_DUP', message: 'Duplicate bet transaction' },
+        'USER_NOT_FOUND':       { code: 'BET_008', message: 'User not found on operator platform' },
+        'OPERATOR_UNREACHABLE': { code: 'BET_010', message: 'Operator wallet service is unavailable. Try again shortly.' },
+      };
+      const mapped = statusMap[operatorAuth.status] || { code: 'BET_011', message: operatorAuth.message || 'Bet rejected by operator' };
+      throw new BadRequestException({
+        success: false,
+        error: { code: mapped.code, message: mapped.message, operatorStatus: operatorAuth.status },
+      });
+    }
+
+    // ── 7. Execute Atomic Lua Script ──────────────────────────────────
+    // Operator has confirmed the debit — now deduct from Redis atomically.
     eventPayload.balanceAfter = '0'; // placeholder
     const payloadWithPlaceholder = JSON.stringify(eventPayload);
 
@@ -164,7 +195,7 @@ export class BetService {
       exposureFields,
     });
 
-    // ── 7. Handle Lua return codes ────────────────────────────────────
+    // ── 8. Handle Lua return codes ────────────────────────────────────
     switch (luaResult.status) {
       case LuaBetResult.SUCCESS:
         break; // Continue

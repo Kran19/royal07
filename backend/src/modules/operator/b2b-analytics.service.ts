@@ -45,7 +45,7 @@ export class B2bAnalyticsService {
   async getOperatorGGR(currency?: string) {
     // Note: We're finding GGR by aggregating Bets joined with Users
     const operators = await this.prisma.operator.findMany({
-      select: { id: true, operatorId: true, name: true, revSharePercent: true }
+      select: { id: true, operatorId: true, name: true }
     });
 
     const results: any[] = [];
@@ -80,8 +80,7 @@ export class B2bAnalyticsService {
         totalBets: agg._count.id,
         totalVolume: totalStake,
         totalPayouts: totalPayout,
-        netGGR: ggr,
-        revSharePercent: Number(op.revSharePercent)
+        netGGR: ggr
       });
     }
 
@@ -90,13 +89,11 @@ export class B2bAnalyticsService {
   }
 
   async getSettlementSnapshot(currency?: string) {
-    // Re-use GGR calculation to determine Settlement Owed (RevShare portion)
     const ggrData = await this.getOperatorGGR(currency);
     return ggrData.map(data => {
-      const settlementOwed = (data.netGGR * data.revSharePercent) / 100;
       return {
         ...data,
-        settlementOwed: Number(settlementOwed.toFixed(2))
+        settlementOwed: data.netGGR
       };
     });
   }

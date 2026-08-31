@@ -11,14 +11,24 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   try {
     const app = await NestFactory.create(AppModule, {
-      bodyParser: true,
-      rawBody: true, // Enable rawBody for RSA signature verification
+      bodyParser: false, // Disable default parser since we register custom express.json() with limits below
     });
     
-    // Increase body limits for large image uploads
+    // Increase body limits for large image uploads and preserve rawBody
     const { json, urlencoded } = require('express');
-    app.use(json({ limit: '100mb' }));
-    app.use(urlencoded({ limit: '100mb', extended: true }));
+    app.use(json({
+      limit: '100mb',
+      verify: (req: any, res: any, buf: Buffer) => {
+        req.rawBody = buf;
+      }
+    }));
+    app.use(urlencoded({
+      limit: '100mb',
+      extended: true,
+      verify: (req: any, res: any, buf: Buffer) => {
+        req.rawBody = buf;
+      }
+    }));
     
     logger.log('✅ Nest Application Created with 100MB limits');
     

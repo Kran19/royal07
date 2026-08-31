@@ -34,6 +34,7 @@ export interface User {
   role: string;
   createdAt: Date;
   updatedAt: Date;
+  operatorId?: string | null;
 }
 
 // Wallet & Transaction Types

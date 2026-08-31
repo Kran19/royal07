@@ -12,7 +12,6 @@ interface Settlement {
   operatorId: string;
   name: string;
   netGGR: number;
-  revSharePercent: number;
   settlementOwed: number;
 }
 
@@ -50,7 +49,7 @@ export function SettlementWidget({ currency = 'INR' }: { currency?: string }) {
       <div className="flex items-center justify-between mb-6 relative z-10">
         <h3 className="text-lg font-bold text-white flex items-center gap-2">
           <WalletCards className="w-5 h-5 text-indigo-200" />
-          RevShare Settlement
+          Operator GGR Settlement
         </h3>
         <span className="text-xs font-medium px-2 py-1 bg-indigo-500 text-white rounded-md">This Month</span>
       </div>
@@ -60,7 +59,6 @@ export function SettlementWidget({ currency = 'INR' }: { currency?: string }) {
           <div key={op.id} className="bg-indigo-700/50 p-4 rounded-xl border border-indigo-500/30">
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-white">{op.name}</span>
-              <span className="text-xs text-indigo-200">{op.revSharePercent}% Share</span>
             </div>
             <div className="flex items-end justify-between">
               <div>

@@ -17,7 +17,7 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
     operatorId: '',
     callbackUrl: '',
     publicKey: '',
-    revSharePercent: 10,
+    allowedIps: '',
   });
 
   if (!isOpen) return null;
@@ -28,9 +28,15 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
     setLoading(true);
 
     try {
+      const ips = formData.allowedIps
+        ? formData.allowedIps.split(',').map((ip) => ip.trim()).filter((ip) => ip.length > 0)
+        : [];
       const res = await apiService.createOperator({
-        ...formData,
-        revSharePercent: Number(formData.revSharePercent)
+        name: formData.name,
+        operatorId: formData.operatorId,
+        callbackUrl: formData.callbackUrl,
+        publicKey: formData.publicKey,
+        allowedIps: ips,
       });
       if (res.success) {
         onSuccess();
@@ -101,16 +107,12 @@ export function CreateOperatorModal({ isOpen, onClose, onSuccess }: CreateOperat
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 dark:text-slate-200">Revenue Share (%)</label>
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-200">Allowed IPs (Comma separated)</label>
               <input 
-                required
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={formData.revSharePercent}
-                onChange={e => setFormData({ ...formData, revSharePercent: parseFloat(e.target.value) || 0 })}
-                placeholder="e.g. 10.0"
+                type="text"
+                value={formData.allowedIps}
+                onChange={e => setFormData({ ...formData, allowedIps: e.target.value })}
+                placeholder="e.g. 103.21.58.1, 103.21.58.2"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>

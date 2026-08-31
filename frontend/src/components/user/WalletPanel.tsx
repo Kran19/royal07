@@ -175,12 +175,12 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
 
   // ─── UI ────────────────────────────────────────────────────────────────────
 
-  const tabs: { id: WalletTab; label: React.ReactNode }[] = [
-    { id: 'balance', label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Balance</div> },
-    { id: 'deposit', label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg> Deposit</div> },
-    { id: 'withdraw', label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg> Withdraw</div> },
-    { id: 'history', label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> History</div> },
-  ];
+  const tabs = [
+    { id: 'balance' as WalletTab, label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Balance</div> },
+    (!user?.operatorId ? { id: 'deposit' as WalletTab, label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg> Deposit</div> } : null),
+    (!user?.operatorId ? { id: 'withdraw' as WalletTab, label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg> Withdraw</div> } : null),
+    { id: 'history' as WalletTab, label: <div className={cn('flex', 'items-center', 'justify-center', 'gap-1.5')}><svg className={cn('w-4', 'h-4')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> History</div> },
+  ].filter(Boolean) as { id: WalletTab; label: React.ReactNode }[];
 
   return (
     <div className={cn('flex', 'flex-col', 'gap-4')}>
@@ -214,9 +214,9 @@ export default function WalletPanel({ token, balance, onBalanceChange, onLogout 
             : 'bg-gradient-to-r from-rose-500/10 to-rose-500/[0.02] border-rose-500/30 border-l-rose-500 text-rose-200'
         )}>
           {msg.type === 'ok' ? (
-            <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg className={cn('w-5', 'h-5', 'text-emerald-400', 'shrink-0')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           ) : (
-            <svg className="w-5 h-5 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg className={cn('w-5', 'h-5', 'text-rose-400', 'shrink-0')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           )}
           <p className="leading-relaxed">{msg.text}</p>
         </div>

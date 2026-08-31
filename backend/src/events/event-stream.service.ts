@@ -158,6 +158,21 @@ export class EventStreamService implements OnModuleInit {
   }
 
   /**
+   * forceSetBalance — Unconditionally overwrites the Redis balance.
+   * Used on B2B operator login to sync the operator-provided balance into Redis.
+   * Unlike seedUserBalance (which uses NX), this ALWAYS writes the new value,
+   * so a returning player with a deposit on the operator platform sees fresh balance.
+   */
+  async forceSetBalance(userId: string, balance: string): Promise<void> {
+    const client = this.redisService.getClient();
+    const pipeline = client.pipeline();
+    pipeline.set(RedisKeys.userBalance(userId), balance);
+    pipeline.set(RedisKeys.userBalanceVersion(userId), Date.now().toString());
+    await pipeline.exec();
+    this.logger.debug(`Force-set Redis balance for user ${userId}: ${balance}`);
+  }
+
+  /**
    * Reads a user's live balance from Redis.
    * Returns null if not yet seeded (caller should fall back to Postgres).
    */

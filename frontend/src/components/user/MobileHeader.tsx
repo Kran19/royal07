@@ -23,9 +23,19 @@ export function MobileHeader({ balance, onWalletClick, onMenuClick }: MobileHead
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2.5">
-          {/* Aviator-style compact green balance button */}
-          <button className="mobile-mock-balance-btn" onClick={onWalletClick}>
+          <button 
+            className={`mobile-mock-balance-btn ${!user?.operatorId ? 'cursor-pointer' : 'cursor-default'}`} 
+            onClick={user?.operatorId ? undefined : onWalletClick}
+          >
             <span className="balance-value">{formatCurrency(Number(balance), user?.currency || 'INR', true)}</span>
+            {!user?.operatorId && (
+              <div className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-black">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </div>
+            )}
           </button>
           
           {/* Menu Icon */}

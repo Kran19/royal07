@@ -68,8 +68,8 @@ export class OperatorSignatureGuard implements CanActivate {
       request.operator = operator;
       return true;
     } catch (error) {
-      this.logger.error(`Error verifying signature: ${error.message}`);
-      throw new UnauthorizedException('Signature verification failed');
+      this.logger.error(`Error verifying signature: ${error.stack}`);
+      throw new UnauthorizedException(`Signature verification failed: ${error.message}`);
     }
   }
 }

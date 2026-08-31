@@ -1,15 +1,31 @@
-import { Controller, Post, Get, Body, UseGuards, HttpCode, Query, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, HttpCode, Query, Param, Patch, BadRequestException } from '@nestjs/common';
 import { OperatorService, LoginOperatorDto } from './operator.service';
 import { OperatorSignatureGuard } from './operator.guard';
 import { JwtAuthGuard } from '../../common/guards/auth.guard';
 
+import { IsString, IsNotEmpty, IsUrl, IsOptional, IsArray } from 'class-validator';
+
 class CreateOperatorDto {
+  @IsString()
+  @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
   operatorId: string;
+
+  @IsString()
+  @IsNotEmpty()
   publicKey: string;
+
+  @IsString()
+  @IsNotEmpty()
   callbackUrl: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
   allowedIps?: string[];
-  revSharePercent?: number;
 }
 
 @Controller('operator')
@@ -41,7 +57,7 @@ export class OperatorController {
       const operator = await this.operatorService.createOperator(dto);
       return { success: true, data: operator };
     } catch (err: any) {
-      return { success: false, error: err.message };
+      throw new BadRequestException(err.message);
     }
   }
 
