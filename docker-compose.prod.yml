@@ -42,6 +42,16 @@ services:
     networks:
       - royalbet_prod_network
 
+  # Fixes host volume permissions automatically
+  init-permissions:
+    image: busybox
+    container_name: royalbet_init_permissions
+    volumes:
+      - ./prod_data/uploads:/data/uploads
+    command: chown -R 1001:1001 /data/uploads
+    networks:
+      - royalbet_prod_network
+
   # Backend API (NestJS)
   backend:
     build:
@@ -64,6 +74,8 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-secret-key-royalbet!}
     depends_on:
+      init-permissions:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
