@@ -17,7 +17,12 @@ const crypto = require('crypto');
 const axios = require('axios'); // For making HTTP requests to RoyalBet
 
 const app = express();
-app.use(express.json());
+// Capture the raw body buffer for accurate RSA signature verification
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // ==========================================
 // INTEGRATION CONFIGURATION
@@ -95,11 +100,20 @@ function generateSignature(payload, privateKey) {
  */
 function verifyRoyalBetSignature(req, publicKey) {
   const signature = req.headers['signature'];
-  if (!signature) return false;
+  if (!signature || !req.rawBody) {
+    console.error('Signature missing or rawBody not captured');
+    return false;
+  }
 
   const verifier = crypto.createVerify('RSA-SHA256');
-  verifier.update(JSON.stringify(req.body));
-  return verifier.verify(publicKey, signature, 'base64');
+  verifier.update(req.rawBody);
+  const isValid = verifier.verify(publicKey, signature, 'base64');
+  
+  if (!isValid) {
+    console.error('Signature verification failed! Raw body:', req.rawBody.toString('utf8'));
+  }
+  
+  return isValid;
 }
 
 // ==========================================
@@ -417,7 +431,7 @@ app.get('/', (req, res) => {
         if (data.success && data.gameUrl) {
           document.getElementById('gameIframe').src = data.gameUrl;
           document.getElementById('gameOverlay').style.display = 'flex';
-          window.balanceInterval = setInterval(updateBalance, 5000);
+          // window.balanceInterval = setInterval(updateBalance, 5000);
         } else {
           alert('Failed to launch game: ' + (data.error || 'Server error'));
         }
@@ -540,12 +554,14 @@ app.use('/royalbet-callback', (req, res, next) => {
 
   const isVerified = verifyRoyalBetSignature(req, ROYALBET_PUBLIC_KEY);
   if (!isVerified) {
+    console.error(`\n❌ [WEBHOOK REJECTED] Signature verification failed for ${req.path}`);
     return res.status(401).json({
       status: 'OP_FAILED',
       message: 'Invalid signature verification failed'
     });
   }
 
+  console.log(`\n✅ [WEBHOOK VERIFIED] Signature verified for ${req.path}`);
   next();
 });
 

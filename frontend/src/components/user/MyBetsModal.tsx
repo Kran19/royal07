@@ -99,16 +99,20 @@ export default function MyBetsModal({ isOpen, onClose, token }: MyBetsModalProps
                     
                     <div className="flex flex-col gap-1 items-end">
                       <div className="text-xs text-slate-400">Payout</div>
-                      {bet.status === 'WON' ? (
-                        <div className="flex items-center gap-1 text-emerald-400">
-                          <div className="text-sm font-mono font-bold">
-                            +{formatCurrency(bet.settlementAmount, user?.currency || 'INR', true)}
+                      {bet.status === 'SETTLED' ? (
+                        Number(bet.settlementAmount) > 0 ? (
+                          <div className="flex items-center gap-1 text-emerald-400">
+                            <div className="text-sm font-mono font-bold">
+                              +{formatCurrency(bet.settlementAmount, user?.currency || 'INR', true)}
+                            </div>
                           </div>
-                        </div>
-                      ) : bet.status === 'LOST' ? (
-                        <div className="flex items-center gap-1 text-rose-400">
-                          <div className="text-sm text-slate-500 font-mono font-bold">-{formatCurrency(bet.amount, user?.currency || 'INR', true)}</div>
-                        </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-rose-400">
+                            <div className="text-sm text-slate-500 font-mono font-bold">-{formatCurrency(bet.amount, user?.currency || 'INR', true)}</div>
+                          </div>
+                        )
+                      ) : bet.status === 'CANCELLED' ? (
+                        <div className="text-sm text-slate-400 font-mono font-bold">Refunded</div>
                       ) : (
                         <div className="text-sm text-yellow-400 font-mono font-bold animate-pulse">Pending...</div>
                       )}

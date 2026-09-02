@@ -69,50 +69,86 @@ export default function BetsPage() {
               key: 'id',
               label: 'Bet ID',
               sortable: true,
-              width: '160',
-              render: (v: any) => <code className="text-xs text-slate-400">{String(v).slice(-8).toUpperCase()}</code>
+              render: (v: any) => <code className="text-[10px] text-slate-400 font-mono">{String(v).slice(-8).toUpperCase()}</code>
+            },
+            {
+              key: 'roundId',
+              label: 'Round',
+              sortable: true,
+              render: (_: any, row: any) => (
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  #{row.round?.roundNumber || '-'}
+                </span>
+              ),
             },
             {
               key: 'userId',
               label: 'User',
               sortable: true,
-              width: '180',
-              render: (_: any, row: Bet) => row.user?.mobile || String(row.userId).slice(-8),
+              render: (_: any, row: any) => row.user?.username || row.user?.mobile || String(row.userId).slice(-8),
             },
             {
               key: 'betType',
               label: 'Type',
-              width: '140',
               hozAlign: 'center',
               render: (value: any) => <Badge variant="cyan">{String(value)}</Badge>,
             },
             {
+              key: 'numbers',
+              label: 'Numbers',
+              hozAlign: 'center',
+              render: (value: any) => (value && Array.isArray(value) && value.length > 0 ? (
+                <div className="flex items-center justify-center gap-1">
+                  {value.map((v, i) => (
+                    <span key={i} className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px]">
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              ) : '-'),
+            },
+            {
               key: 'status',
               label: 'Status',
-              width: '150',
               hozAlign: 'center',
               render: (value: any) => <Badge variant={getStatusColor(value as BetStatus)}>{String(value)}</Badge>,
             },
             {
               key: 'amount',
               label: 'Stake',
-              width: '130',
               hozAlign: 'right',
               sortable: true,
               render: (value: any) => `₹${Number(value).toLocaleString()}`
             },
             {
+              key: 'payoutMultiplier',
+              label: 'Odds',
+              hozAlign: 'center',
+              render: (value: any) => value ? <span className="text-indigo-500 font-bold text-xs">x{value}</span> : '-'
+            },
+            {
               key: 'settlementAmount',
               label: 'Payout',
-              width: '130',
               hozAlign: 'right',
-              render: (value: any) => value ? `₹${Number(value).toLocaleString()}` : '-'
+              render: (value: any, row: any) => {
+                if (row.status !== 'SETTLED') return <span className="text-slate-400">-</span>;
+                const isWin = Number(value) > 0;
+                return (
+                  <span className={isWin ? 'text-emerald-500 font-bold' : 'text-slate-500 font-medium'}>
+                    ₹{Number(value || 0).toLocaleString()}
+                  </span>
+                );
+              }
             },
             {
               key: 'createdAt',
               label: 'Created',
-              width: '160',
-              render: (value: any) => new Date(value as Date).toLocaleTimeString(),
+              render: (value: any) => (
+                <div className="flex flex-col text-xs text-slate-500">
+                  <span>{new Date(value as Date).toLocaleDateString()}</span>
+                  <span>{new Date(value as Date).toLocaleTimeString()}</span>
+                </div>
+              ),
             },
           ]}
           data={bets}
@@ -169,7 +205,7 @@ export default function BetsPage() {
 
             <DrawerSection title="Financial summary">
               <MetricRow label="Stake" value={`₹${selectedBet.amount.toLocaleString()}`} />
-              <MetricRow label="Payout" value={selectedBet.settlementAmount ? `₹${selectedBet.settlementAmount.toLocaleString()}` : 'Pending'} />
+              <MetricRow label="Payout" value={selectedBet.status === 'SETTLED' ? `₹${(selectedBet.settlementAmount || 0).toLocaleString()}` : 'Pending'} />
               <MetricRow label="Numbers" value={selectedBet.numbers.join(', ')} />
             </DrawerSection>
           </div>

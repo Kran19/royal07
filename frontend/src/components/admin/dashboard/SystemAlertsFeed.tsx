@@ -78,8 +78,8 @@ export function SystemAlertsFeed() {
                   <div className="mt-0.5">
                     <Icon className={cn("w-4 h-4", iconColor)} />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-snug">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-snug break-words">
                       {alert.message}
                     </p>
                     <div className="flex items-center gap-2 mt-2">

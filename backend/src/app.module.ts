@@ -17,10 +17,19 @@ import { WorkerModule } from './workers/worker.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { OperatorModule } from './modules/operator/operator.module';
+import { LayoutModule } from './modules/layout/layout.module';
+
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }),
     PrismaModule,
     RedisModule,
     WebsocketModule,
@@ -34,6 +43,7 @@ import { OperatorModule } from './modules/operator/operator.module';
     WorkerModule,
     SettingsModule,
     OperatorModule,
+    LayoutModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',

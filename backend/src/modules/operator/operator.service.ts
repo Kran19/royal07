@@ -153,6 +153,13 @@ export class OperatorService {
         status: true,
         createdAt: true,
         allowedIps: true,
+        publicKey: true,
+        _count: {
+          select: {
+            users: true,
+            transactions: true
+          }
+        }
       }
     });
   }
@@ -193,8 +200,37 @@ export class OperatorService {
       this.prisma.operatorTransaction.count({ where }),
     ]);
 
+    // Fetch user details manually since there is no Prisma relation
+    const userIds = [...new Set(items.map((i: any) => i.userId))];
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          { id: { in: userIds } },
+          { operatorUserId: { in: userIds } },
+          { username: { in: userIds } }
+        ]
+      },
+      select: { id: true, username: true, operatorUserId: true }
+    });
+
+    const userMap = new Map();
+    for (const u of users) {
+      userMap.set(u.id, u);
+      if (u.operatorUserId) userMap.set(u.operatorUserId, u);
+      if (u.username) userMap.set(u.username, u);
+    }
+
+    const enrichedItems = items.map((item: any) => {
+      const u = userMap.get(item.userId);
+      return {
+        ...item,
+        displayUsername: u?.username || u?.operatorUserId || item.userId,
+        internalUserId: u?.id || item.userId
+      };
+    });
+
     return {
-      items,
+      items: enrichedItems,
       meta: {
         total,
         page,
@@ -312,12 +348,29 @@ export class OperatorService {
     const roundNumber = round ? round.roundNumber : 0;
 
     if (txn.type === 'DEBIT') {
-      return this.walletCallbackService.debitBet(txn.operator.id, txn.userId, txn.transactionId, txn.roundId, Number(txn.amount), token, roundNumber);
+      throw new Error('Cannot retry a DEBIT transaction. A failed debit means the bet was never placed in the game.');
     } else if (txn.type === 'CREDIT') {
       return this.walletCallbackService.creditWin(txn.operator.id, txn.userId, txn.transactionId, txn.roundId, Number(txn.amount), token, roundNumber);
     } else {
       throw new Error(`Retry not implemented for transaction type ${txn.type}`);
     }
+  }
+
+  async skipTransaction(txnId: string) {
+    const txn = await this.prisma.operatorTransaction.findUnique({
+      where: { id: txnId },
+    });
+
+    if (!txn) throw new Error('Transaction not found');
+    if (txn.status === 'SUCCESS') throw new Error('Cannot skip a successful transaction');
+
+    return this.prisma.operatorTransaction.update({
+      where: { id: txnId },
+      data: {
+        status: 'SKIPPED',
+        responsePayload: '{"remark": "Skipped by admin"}'
+      }
+    });
   }
 
   async updateOperator(id: string, data: any) {

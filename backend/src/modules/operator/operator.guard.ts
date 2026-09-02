@@ -39,8 +39,19 @@ export class OperatorSignatureGuard implements CanActivate {
 
     // IP Whitelist check (if any are configured)
     if (operator.allowedIps && operator.allowedIps.length > 0) {
-      const clientIp = request.ip || request.connection.remoteAddress;
-      if (!operator.allowedIps.includes(clientIp)) {
+      let clientIp = request.ip || request.connection?.remoteAddress || '';
+      
+      // Clean IPv6 mapped IPv4 address (e.g. ::ffff:192.168.1.1 -> 192.168.1.1)
+      if (clientIp.startsWith('::ffff:')) {
+        clientIp = clientIp.replace('::ffff:', '');
+      }
+
+      // Allow 0.0.0.0 or * to mean "allow all"
+      const allowsAny = operator.allowedIps.includes('0.0.0.0') || 
+                        operator.allowedIps.includes('*') || 
+                        operator.allowedIps.includes('0.0.0.0/0');
+
+      if (!allowsAny && !operator.allowedIps.includes(clientIp)) {
         this.logger.warn(`IP ${clientIp} not in whitelist for operator ${operator.operatorId}`);
         throw new UnauthorizedException('IP not whitelisted');
       }

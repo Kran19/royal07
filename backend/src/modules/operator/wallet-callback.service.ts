@@ -2,6 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class WalletCallbackService implements OnModuleInit {
@@ -9,10 +11,14 @@ export class WalletCallbackService implements OnModuleInit {
   
   // We should read our own private key from env, but for now we simulate
   private get ourPrivateKey(): string {
-    return process.env.GAP_PRIVATE_KEY || ''; // Needs to be set in .env
+    const key = process.env.GAP_PRIVATE_KEY || ''; // Needs to be set in .env
+    return key.replace(/\\n/g, '\n');
   }
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @InjectQueue('webhook-queue') private webhookQueue: Queue
+  ) {}
 
   onModuleInit() {
     const key = this.ourPrivateKey;
@@ -36,57 +42,38 @@ export class WalletCallbackService implements OnModuleInit {
   }
 
   /**
-   * sendRequestWithRetry — Async retry loop for WIN CREDIT callbacks
+   * sendRequestWithRetry — Enqueues webhook to BullMQ for reliable processing
    * =================================================================
    * Used only by creditWin() (result/win payout) after round settlement.
-   * Retries up to 10x with exponential backoff.
+   * Retries up to 10x with exponential backoff via BullMQ.
    * NOT used for bet placement — use debitBetSync() for that.
    */
   private async sendRequestWithRetry(url: string, body: any, transactionId: string): Promise<any> {
     const signature = this.signRequest(body);
-    let attempts = 0;
-    const maxRetries = 10;
-
-    while (attempts < maxRetries) {
-      try {
-        const reqStartTime = performance.now();
-        const response = await axios.post(url, body, {
-          headers: { 'Content-Type': 'application/json', 'Signature': signature },
-          timeout: 5000
-        });
-        const responseTimeMs = Math.round(performance.now() - reqStartTime);
-
-        if (response.status === 200 && response.data.status === 'OP_SUCCESS') {
-          await this.prisma.operatorTransaction.update({
-            where: { transactionId },
-            data: { status: 'SUCCESS', retries: attempts, responseTimeMs }
-          });
-          return response.data;
-        } else {
-          throw new Error(`Operator returned non-success: ${JSON.stringify(response.data)}`);
-        }
-      } catch (error) {
-        attempts++;
-        this.logger.error(`Attempt ${attempts} failed for txn ${transactionId}: ${error.message}`);
-        await this.prisma.operatorTransaction.update({
-          where: { transactionId },
-          data: { retries: attempts, status: attempts >= maxRetries ? 'FAILED' : 'PENDING' }
-        });
-        if (attempts >= maxRetries) {
-          await this.prisma.systemAlert.create({
-            data: {
-              type: 'CRITICAL',
-              message: `Operator Webhook failed after ${maxRetries} retries for txn ${transactionId}. URL: ${url}`,
-              source: 'WEBHOOK_SERVICE',
-              operatorId: body.operatorId
-            }
-          });
-          throw new Error(`Max retries reached for transaction ${transactionId}`);
-        }
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
-      }
-    }
+    
+    // We do NOT update the status to PENDING here because it's already set to PENDING
+    // in the calling methods (debitBet, creditWin).
+    
+    await this.webhookQueue.add('webhook-request', {
+      transactionId,
+      operatorId: body.operatorId,
+      url,
+      bodyString: JSON.stringify(body),
+      signature
+    }, {
+      attempts: 10,
+      backoff: {
+        type: 'exponential',
+        delay: 2000 // Starts at 2s, then 4s, 8s, 16s...
+      },
+      removeOnComplete: true, // Don't keep successful webhooks in Redis indefinitely
+      removeOnFail: 1000,     // Keep maximum of 1000 failed jobs for debugging
+    });
+    
+    this.logger.log(`Enqueued webhook for txn ${transactionId}`);
   }
+
+
 
   /**
    * debitBetSync — Synchronous bet authorization (USED ON BET HOT PATH)
@@ -169,7 +156,7 @@ export class WalletCallbackService implements OnModuleInit {
           'Content-Type': 'application/json',
           'Signature': signature
         },
-        timeout: 5000  // Hard 5s limit — if operator is slow, bet is rejected
+        timeout: 3000  // Hard 3s limit — if operator is slow, bet is rejected
       });
       const responseTimeMs = Math.round(performance.now() - startTime);
       const { status, balance } = response.data;
@@ -177,7 +164,7 @@ export class WalletCallbackService implements OnModuleInit {
       if (response.status === 200 && status === 'OP_SUCCESS') {
         await this.prisma.operatorTransaction.update({
           where: { transactionId },
-          data: { status: 'SUCCESS', retries: 0, responseTimeMs }
+          data: { status: 'SUCCESS', retries: 0, responseTimeMs, responsePayload: JSON.stringify(response.data) }
         });
         return { success: true, status, balance };
       }
@@ -185,15 +172,16 @@ export class WalletCallbackService implements OnModuleInit {
       // Operator declined (INSUFFICIENT_FUNDS, USER_NOT_FOUND, etc.)
       await this.prisma.operatorTransaction.update({
         where: { transactionId },
-        data: { status: 'FAILED', retries: 0, responseTimeMs }
+        data: { status: 'FAILED', retries: 0, responseTimeMs, responsePayload: JSON.stringify(response.data) }
       });
       this.logger.warn(`Operator declined bet ${transactionId}: ${status}`);
       return { success: false, status, balance, message: response.data.message };
 
     } catch (error) {
+      const errorPayload = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       await this.prisma.operatorTransaction.update({
         where: { transactionId },
-        data: { status: 'FAILED', retries: 1 }
+        data: { status: 'FAILED', retries: 1, responsePayload: errorPayload }
       });
       this.logger.error(`Operator betrequest failed for txn ${transactionId}: ${error.message}`);
       return { success: false, status: 'OPERATOR_UNREACHABLE', message: error.message };
@@ -202,53 +190,6 @@ export class WalletCallbackService implements OnModuleInit {
 
 
 
-  async debitBet(
-    operatorId: string, 
-    userId: string, 
-    transactionId: string, 
-    roundId: string, 
-    debitAmount: number,
-    token: string,
-    roundNumber: number
-  ) {
-    const operator = await this.prisma.operator.findUnique({ where: { id: operatorId }});
-    if (!operator || !operator.callbackUrl) return;
-
-    await this.prisma.operatorTransaction.upsert({
-      where: { transactionId },
-      update: { status: 'PENDING' },
-      create: {
-        operatorId,
-        userId,
-        transactionId,
-        roundId,
-        type: 'DEBIT',
-        amount: debitAmount,
-        status: 'PENDING'
-      }
-    });
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { operatorUserId: true }
-    });
-
-    const body = {
-      operatorId: operator.operatorId,
-      userId: user?.operatorUserId || userId,
-      token,
-      reqId: crypto.randomUUID(),
-      transactionId,
-      gameId: 'royalbet-elevator',
-      roundId,
-      debitAmount,
-      betType: 'SINGLE',
-      round_closed: false,
-      eventName: `Elevator Round ${roundNumber}`
-    };
-
-    return this.sendRequestWithRetry(`${operator.callbackUrl}/betrequest`, body, transactionId);
-  }
 
   async creditWin(
     operatorId: string, 
@@ -262,13 +203,16 @@ export class WalletCallbackService implements OnModuleInit {
     const operator = await this.prisma.operator.findUnique({ where: { id: operatorId }});
     if (!operator || !operator.callbackUrl) return;
 
+    // Create a local unique ID to prevent upsert collision with the original bet debit row
+    const localTxnId = transactionId.startsWith('win_') ? transactionId : `win_${transactionId}`;
+
     await this.prisma.operatorTransaction.upsert({
-      where: { transactionId },
+      where: { transactionId: localTxnId },
       update: { status: 'PENDING' },
       create: {
         operatorId,
         userId,
-        transactionId,
+        transactionId: localTxnId,
         roundId,
         type: 'CREDIT',
         amount: creditAmount,
@@ -286,7 +230,7 @@ export class WalletCallbackService implements OnModuleInit {
       userId: user?.operatorUserId || userId,
       token,
       reqId: crypto.randomUUID(),
-      transactionId,
+      transactionId, // Send original bet ID to operator as requested
       gameId: 'royalbet-elevator',
       roundId,
       creditAmount,
@@ -294,6 +238,6 @@ export class WalletCallbackService implements OnModuleInit {
       eventName: `Elevator Round ${roundNumber}`
     };
 
-    return this.sendRequestWithRetry(`${operator.callbackUrl}/resultrequest`, body, transactionId);
+    return this.sendRequestWithRetry(`${operator.callbackUrl}/resultrequest`, body, localTxnId);
   }
 }

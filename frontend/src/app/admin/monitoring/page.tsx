@@ -74,10 +74,37 @@ export default function MonitoringPage() {
       )
     },
     {
+      key: 'openingResult',
+      label: 'Result',
+      width: '100',
+      hozAlign: 'center' as const,
+      render: (v: any) => v !== null && (Array.isArray(v) ? v.length > 0 : true) ? (
+        <span className={cn('font-black', 'text-indigo-500', 'dark:text-indigo-400', 'bg-indigo-500/10', 'px-2', 'py-0.5', 'rounded', 'text-[13px]')}>
+          {Array.isArray(v) ? v.join(', ') : v}
+        </span>
+      ) : '-'
+    },
+    {
+      key: 'openingType',
+      label: 'Type',
+      width: '100',
+      hozAlign: 'center' as const,
+      render: (v: any) => v ? (
+        <span className={cn('text-[11px]', 'font-bold', 'uppercase', 'tracking-wider', 'text-slate-500')}>{v}</span>
+      ) : '-'
+    },
+    {
+      key: '_count',
+      label: 'Bets',
+      width: '80',
+      hozAlign: 'center' as const,
+      render: (v: any) => v?.bets || 0
+    },
+    {
       key: 'startedAt',
-      label: 'Started',
-      width: '140',
-      render: (v: any) => new Date(v as string).toLocaleTimeString()
+      label: 'Started At',
+      width: '120',
+      render: (v: any) => new Date(v as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ];
 

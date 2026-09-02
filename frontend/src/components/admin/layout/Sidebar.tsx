@@ -31,7 +31,6 @@ const MENU_GROUPS = [
     items: [
       { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/admin/monitoring', label: 'Live Monitoring', icon: Activity },
-      { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/admin/wallet', label: 'Wallet', icon: Wallet },
     ]
   },

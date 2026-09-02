@@ -139,6 +139,7 @@ export interface BetStats {
   totalPayoutToday: number;
   profitLossToday: number;
   calculationTimeMs?: number;
+  totalOperators?: number;
 }
 
 // API Response Types

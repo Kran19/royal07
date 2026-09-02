@@ -1,3 +1,9 @@
+
+
+# Run this script to take snapshot of your database
+./backup.sh
+
+
 # RoyalBet
 
 RoyalBet is a Docker-first betting platform with:
@@ -38,23 +44,3 @@ That script:
 4. rebuilds the live Docker stack
 5. waits for backend and frontend readiness
 6. ensures the admin account exists
-
-## Admin test credentials
-
-- Mobile: `9998887766`
-- Password: `admin123`
-
-## What was fixed
-
-- backend startup blocker in the opening module
-- missing backend `/health` endpoint
-- wrong backend production start path
-- frontend/backend route mismatches
-- inaccurate admin online/offline check
-- local-vs-Docker backend rewrite mismatch in Next.js
-- frontend Docker healthcheck false negatives
-- gameplay result fallback bug when there were no bets
-
-## Documentation
-
-Full operational and architecture notes are in [PROJECT_RUNBOOK.md](/c:/Users/Admin/Desktop/royalbackend/PROJECT_RUNBOOK.md).

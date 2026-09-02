@@ -127,7 +127,6 @@ export default function TransactionsPage() {
             {
               key: 'user',
               label: 'User Info',
-              width: '240',
               render: (v: any, row: any) => (
                 <div className="flex flex-col">
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -141,39 +140,61 @@ export default function TransactionsPage() {
               ),
             },
             {
+              key: 'reference',
+              label: 'Reference',
+              render: (v: any, row: any) => row.reference ? <code className="text-xs text-slate-500">{row.reference}</code> : <span className="text-slate-400">-</span>,
+            },
+            {
               key: 'type',
               label: 'Type',
-              width: '160',
               hozAlign: 'center',
               render: (value: any) => <Badge variant={getTypeColor(value as TransactionType)}>{String(value)}</Badge>,
             },
             {
               key: 'amount',
               label: 'Amount',
-              width: '140',
               hozAlign: 'right',
               sortable: true,
               render: (value: any, row: any) => {
                 const isCredit = row.type === 'DEPOSIT' || row.type === 'BET_WON' || row.type === 'ADJUSTMENT_CREDIT';
                 const sign = isCredit ? '+' : '-';
-                const color = isCredit ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+                const color = isCredit ? 'text-emerald-500 font-bold' : 'text-rose-500 font-bold';
                 return (
-                  <span className={color}>
-                    {sign}₹{Math.abs(Number(value)).toLocaleString()}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className={color}>
+                      {sign}₹{Math.abs(Number(value)).toLocaleString()}
+                    </span>
+                  </div>
                 );
               },
             },
             {
+              key: 'balance',
+              label: 'Balances',
+              hozAlign: 'right',
+              render: (value: any, row: any) => {
+                if (row.balanceBefore == null || row.balanceAfter == null) return <span className="text-slate-400 text-xs">-</span>;
+                return (
+                  <div className="flex flex-col items-end text-[10px] text-slate-500 font-mono">
+                    <span>Pre: ₹{Number(row.balanceBefore).toLocaleString()}</span>
+                    <span>Post: ₹{Number(row.balanceAfter).toLocaleString()}</span>
+                  </div>
+                );
+              }
+            },
+            {
               key: 'description',
               label: 'Details',
-              width: '280',
-              render: (v: any) => v ? <span className="text-slate-300 text-xs">{String(v)}</span> : <span className="text-slate-600 text-xs">-</span>
+              render: (v: any, row: any) => (
+                <div className="flex flex-col">
+                  {v ? <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{String(v)}</span> : <span className="text-slate-400 text-xs">-</span>}
+                  {row.adminRemark && <span className="text-indigo-500 text-[10px] mt-0.5">Admin: {row.adminRemark}</span>}
+                </div>
+              )
             },
             {
               key: 'status',
               label: 'Status',
-              width: '150',
               hozAlign: 'center',
               render: (value: any) => (
                 <Badge
@@ -192,13 +213,16 @@ export default function TransactionsPage() {
             {
               key: 'createdAt',
               label: 'Created',
-              width: '160',
-              render: (value: any) => new Date(value as Date).toLocaleTimeString(),
+              render: (value: any) => (
+                <div className="flex flex-col text-xs text-slate-500">
+                  <span>{new Date(value as Date).toLocaleDateString()}</span>
+                  <span>{new Date(value as Date).toLocaleTimeString()}</span>
+                </div>
+              ),
             },
             {
               key: 'actions',
               label: 'Actions',
-              width: '160',
               hozAlign: 'center',
               render: (v: any, row: any) => {
                 if (row.status !== TransactionStatus.PENDING) return <span className="text-slate-400 text-xs">-</span>;

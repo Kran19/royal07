@@ -62,6 +62,7 @@ services:
       PORT: 4000
       DATABASE_URL: ${DATABASE_URL:-postgresql://royalbet:royalbet_pass@postgres:5432/royalbet?schema=public}
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-secret-key-royalbet!}
     depends_on:
       postgres:
@@ -69,7 +70,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - uploads_data_prod:/app/uploads
+      - ./prod_data/uploads:/app/uploads
     networks:
       - royalbet_prod_network
 
@@ -87,7 +88,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata_prod:/var/lib/postgresql/data
+      - ./prod_data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U royalbet"]
       interval: 10s
@@ -105,7 +106,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redisdata_prod:/data
+      - ./prod_data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -114,10 +115,6 @@ services:
     networks:
       - royalbet_prod_network
 
-volumes:
-  pgdata_prod:
-  redisdata_prod:
-  uploads_data_prod:
 
 networks:
   royalbet_prod_network:

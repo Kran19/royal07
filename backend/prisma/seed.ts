@@ -3,7 +3,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import * as bcrypt from 'bcrypt';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({
+  host: '127.0.0.1',
+  port: 5432,
+  user: 'royalbet',
+  password: 'King@0706',
+  database: 'royalbet'
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

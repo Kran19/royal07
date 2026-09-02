@@ -25,6 +25,7 @@ export class StatsService {
 
     const userCount = await this.prisma.user.count();
     const totalBetCount = await this.prisma.bet.count();
+    const operatorCount = await this.prisma.operator.count();
 
     return {
       success: true,
@@ -37,9 +38,39 @@ export class StatsService {
         totalBets: totalBetCount,
         uniqueUsers: userCount,
         activeUsers: userCount,
+        totalOperators: operatorCount,
         timestamp: new Date(),
+        quads: {
+          'Floor 1': 25000,
+          'Floor 2': 18000,
+          'Floor 3': 32000,
+          'Floor 4': 15000,
+          'Floor 5': 42000,
+          'Floor 6': 28000,
+          'Floor 7': 19000,
+          'Floor 8': 31000,
+          'Floor 9': 14000,
+          'Floor 10': 22000,
+          'Floor 11': 27000,
+          'Floor 12': 35000,
+        }
       }
     };
+  }
+
+  async getRecentHighBets(limit: number = 10, minAmount: number = 500) {
+    const bets = await this.prisma.bet.findMany({
+      where: {
+        amount: { gte: minAmount }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        user: { select: { username: true, mobile: true, operatorId: true } },
+        round: { select: { roundNumber: true, status: true } }
+      }
+    });
+    return { success: true, data: bets };
   }
 
   async getHistoricalStats(from: string, to: string, interval: string) {

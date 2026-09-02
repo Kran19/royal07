@@ -70,7 +70,10 @@ export class GameService {
         totalPayout: true,
         houseProfit: true,
         startedAt: true,
-        endedAt: true
+        endedAt: true,
+        _count: {
+          select: { bets: true }
+        }
       }
     });
 

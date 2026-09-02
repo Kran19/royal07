@@ -129,7 +129,8 @@ export class WalletService {
           amount: amount as any,
           balanceBefore: (user as any).balance as any,
           balanceAfter: (updatedUser as any).balance as any,
-          status: 'PENDING'
+          status: 'PENDING',
+          description: dto.upiOrAccount
         }
       });
 
@@ -190,7 +191,7 @@ export class WalletService {
         where,
         include: {
           user: {
-            select: { mobile: true, balance: true }
+            select: { mobile: true, balance: true, username: true }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -205,7 +206,8 @@ export class WalletService {
       data: {
         items: transactions.map(t => ({
           ...t,
-          proofImageUrl: t.description?.startsWith('/uploads') ? t.description : undefined
+          proofImageUrl: t.description?.startsWith('/uploads') ? t.description : undefined,
+          upiOrAccount: t.type === 'WITHDRAW' ? (t.description || 'N/A') : undefined
         })),
         meta: {
           total,
@@ -266,7 +268,7 @@ export class WalletService {
     };
   }
 
-  async processTransaction(adminId: string, id: string, action: 'approve' | 'reject', adminNote?: string) {
+  async processTransaction(adminId: string, id: string, action: 'approve' | 'reject', adminNote?: string, file?: Express.Multer.File) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
       include: { user: true }
@@ -318,12 +320,16 @@ export class WalletService {
         } 
         
         // For withdrawals, balance is usually already deducted at request time
+        const metadataUpdate = file ? { adminProofUrl: `/uploads/proofs/${file.filename}` } : {};
+        const currentMetadata = (transaction.metadata as any) || {};
+
         const updated = await tx.transaction.update({
           where: { id },
           data: {
             status: 'COMPLETED',
             adminRemark: adminNote,
-            settledAt: new Date()
+            settledAt: new Date(),
+            metadata: Object.keys(metadataUpdate).length > 0 ? { ...currentMetadata, ...metadataUpdate } : currentMetadata
           }
         });
 

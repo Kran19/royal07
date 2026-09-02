@@ -114,11 +114,16 @@ export class EventProcessorWorker implements OnModuleInit, OnModuleDestroy {
         description: `Placed ${ev.betType} bet on [${ev.numbers.join(', ')}] @ ₹${ev.amount}/floor`,
       }));
 
-      // Aggregate deductions by user to update Postgres in bulk
+      // Aggregate deductions and bet counts by user to update Postgres in bulk
       const userDeductions = new Map<string, number>();
+      const userBetCounts = new Map<string, number>();
+      
       for (const ev of events) {
         const existing = userDeductions.get(ev.userId) || 0;
         userDeductions.set(ev.userId, existing + parseFloat(ev.totalDeducted));
+        
+        const count = userBetCounts.get(ev.userId) || 0;
+        userBetCounts.set(ev.userId, count + 1);
       }
 
       // Single transaction: insert bets + transaction records together
@@ -133,11 +138,15 @@ export class EventProcessorWorker implements OnModuleInit, OnModuleDestroy {
         });
 
         // Deduct balances in Postgres in bulk using a raw SQL CASE update
-        // Generates CASE statements: "WHEN 'userId_A' THEN 200 WHEN 'userId_B' THEN 400"
         if (userDeductions.size > 0) {
           const caseStatements = Array.from(userDeductions.entries())
             .map(([uid, deduct]) => `WHEN '${uid}' THEN ${deduct.toFixed(2)}::numeric`)
             .join('\n            ');
+            
+          const betCountCase = Array.from(userBetCounts.entries())
+            .map(([uid, count]) => `WHEN '${uid}' THEN ${count}`)
+            .join('\n            ');
+            
           const inClause = Array.from(userDeductions.keys())
             .map(uid => `'${uid}'`)
             .join(', ');
@@ -147,6 +156,7 @@ export class EventProcessorWorker implements OnModuleInit, OnModuleDestroy {
             UPDATE "User"
             SET
               balance   = balance - CASE id ${caseStatements} END,
+              "totalBets" = "totalBets" + CASE id ${betCountCase} END,
               "updatedAt" = NOW(),
               version  = version + 1
             WHERE id IN (${inClause})

@@ -137,8 +137,30 @@ export const apiService = {
   },
 
   // --- House Analytics (Admin Dashboard) ---
-  async getCurrentHouseStats(): Promise<ApiResponse<BetStats>> {
+  async getCurrentHouseStats(): Promise<ApiResponse<BetStats & { totalOperators: number }>> {
     const res = await fetch(`${API_BASE}/stats/current`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  // --- Layout & Search ---
+  async globalSearch(query: string): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/layout/search?q=${encodeURIComponent(query)}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async getNotifications(): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/layout/notifications`, {
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async getRecentHighBets(limit: number = 10, minAmount: number = 500): Promise<ApiResponse<any[]>> {
+    const res = await fetch(`${API_BASE}/stats/high-bets?limit=${limit}&minAmount=${minAmount}`, {
       headers: this.getAuthHeaders(),
     });
     return res.json();
@@ -192,6 +214,14 @@ export const apiService = {
 
   async retryTransaction(txnId: string): Promise<ApiResponse<any>> {
     const res = await fetch(`${API_BASE}/operator/transactions/${txnId}/retry`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  async skipTransaction(txnId: string): Promise<ApiResponse<any>> {
+    const res = await fetch(`${API_BASE}/operator/transactions/${txnId}/skip`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
     });
@@ -294,11 +324,24 @@ export const apiService = {
     return res.json();
   },
 
-  async processAdminTransaction(id: string, action: 'approve' | 'reject', adminNote?: string): Promise<ApiResponse<any>> {
+  async processAdminTransaction(id: string, action: 'approve' | 'reject', adminNote?: string, proofFile?: File | null): Promise<ApiResponse<any>> {
+    const headers: any = this.getAuthHeaders();
+    
+    let body;
+    if (proofFile) {
+      delete headers['Content-Type']; // Let browser set boundary
+      const formData = new FormData();
+      if (adminNote) formData.append('adminNote', adminNote);
+      formData.append('proof', proofFile);
+      body = formData;
+    } else {
+      body = JSON.stringify({ adminNote });
+    }
+
     const res = await fetch(`${API_BASE}/wallet/admin/${id}/${action}`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ adminNote }),
+      headers,
+      body,
     });
     return res.json();
   },

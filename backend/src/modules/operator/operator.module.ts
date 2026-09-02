@@ -8,10 +8,19 @@ import { B2bAnalyticsController } from './b2b-analytics.controller';
 import { B2bAnalyticsService } from './b2b-analytics.service';
 import { EventsModule } from '../../events/events.module';
 
+import { BullModule } from '@nestjs/bullmq';
+import { WebhookProcessor } from './webhook.processor';
+
 @Module({
-  imports: [PrismaModule, EventsModule],
+  imports: [
+    PrismaModule, 
+    EventsModule,
+    BullModule.registerQueue({
+      name: 'webhook-queue',
+    }),
+  ],
   controllers: [OperatorController, B2bAnalyticsController],
-  providers: [OperatorService, WalletCallbackService, OperatorSignatureGuard, B2bAnalyticsService],
+  providers: [OperatorService, WalletCallbackService, OperatorSignatureGuard, B2bAnalyticsService, WebhookProcessor],
   exports: [OperatorService, WalletCallbackService, B2bAnalyticsService],
 })
 export class OperatorModule {}

@@ -61,7 +61,7 @@ async function main() {
       name: 'BetStar India',
       operatorId: 'OP_BETSTAR_02',
       publicKey: FAKE_PUBLIC_KEY,
-      callbackUrl: 'https://wallet.betstar.in/api',
+      callbackUrl: 'http://host.docker.internal:5000/api',
       allowedIps: ['202.44.12.9'],
       status: 'ACTIVE',
     },

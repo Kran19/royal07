@@ -101,6 +101,8 @@ export default function OperatorsPage() {
                 <th className="py-4 px-6 whitespace-nowrap">Operator Name</th>
                 <th className="py-4 px-6 whitespace-nowrap">Operator ID</th>
                 <th className="py-4 px-6 whitespace-nowrap">Callback URL</th>
+                <th className="py-4 px-6 whitespace-nowrap text-center">Users</th>
+                <th className="py-4 px-6 whitespace-nowrap text-center">Txns</th>
                 <th className="py-4 px-6 whitespace-nowrap">Status</th>
                 <th className="py-4 px-6 whitespace-nowrap">Registered</th>
                 <th className="py-4 px-6 text-right">Actions</th>
@@ -109,7 +111,7 @@ export default function OperatorsPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
                       <p className="text-sm font-medium">Loading operators...</p>
@@ -118,7 +120,7 @@ export default function OperatorsPage() {
                 </tr>
               ) : operators.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Server className="w-12 h-12 text-slate-300 dark:text-slate-700" />
                       <p className="text-base font-semibold text-slate-600 dark:text-slate-400 mt-2">No operators found</p>
@@ -148,6 +150,16 @@ export default function OperatorsPage() {
                     </td>
                     <td className="py-4 px-6 max-w-[200px] truncate text-sm text-slate-600 dark:text-slate-400">
                       {op.callbackUrl}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        {op._count?.users?.toLocaleString() || 0}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        {op._count?.transactions?.toLocaleString() || 0}
+                      </span>
                     </td>
                     <td className="py-4 px-6">
                       <span className={cn(

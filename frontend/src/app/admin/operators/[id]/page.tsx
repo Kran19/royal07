@@ -20,7 +20,9 @@ export default function OperatorDetailPage({ params }: { params: Promise<{ id: s
   const [formData, setFormData] = useState({
     name: '',
     callbackUrl: '',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    publicKey: '',
+    allowedIps: ''
   });
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +42,9 @@ export default function OperatorDetailPage({ params }: { params: Promise<{ id: s
             setFormData({
               name: found.name,
               callbackUrl: found.callbackUrl,
-              status: found.status
+              status: found.status,
+              publicKey: found.publicKey || '',
+              allowedIps: (found.allowedIps || []).join(', ')
             });
           }
         }
@@ -61,7 +65,11 @@ export default function OperatorDetailPage({ params }: { params: Promise<{ id: s
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await apiService.updateOperator(id, formData);
+      const payload = {
+        ...formData,
+        allowedIps: formData.allowedIps.split(',').map(ip => ip.trim()).filter(Boolean)
+      };
+      const res = await apiService.updateOperator(id, payload);
       if (res.success) {
         alert('Settings saved successfully');
         setOperator(res.data);
@@ -267,6 +275,27 @@ export default function OperatorDetailPage({ params }: { params: Promise<{ id: s
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="SUSPENDED">SUSPENDED</option>
               </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Public Key (RSA PEM)</label>
+              <textarea 
+                value={formData.publicKey}
+                onChange={e => setFormData({ ...formData, publicKey: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-xs"
+                rows={5}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Allowed IPs (Comma-separated)</label>
+              <input 
+                type="text" 
+                value={formData.allowedIps}
+                onChange={e => setFormData({ ...formData, allowedIps: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-sm"
+                placeholder="192.168.1.1, 10.0.0.1"
+              />
+              <p className="text-xs text-slate-500">Leave blank to allow all IPs (not recommended for production).</p>
             </div>
             
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">

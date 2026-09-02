@@ -116,6 +116,17 @@ export class OperatorController {
     }
   }
 
+  @Post('transactions/:txnId/skip')
+  @UseGuards(JwtAuthGuard)
+  async skipTransaction(@Param('txnId') txnId: string) {
+    try {
+      const result = await this.operatorService.skipTransaction(txnId);
+      return { success: true, data: result };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async updateOperator(@Param('id') id: string, @Body() data: any) {

@@ -85,20 +85,17 @@ export default function UsersPage() {
               key: 'username',
               label: 'Username',
               sortable: true,
-              width: '180',
               render: (value: any, row: User) => value || row.mobile || '-',
             },
             {
-              key: 'email',
-              label: 'Email',
-              sortable: true,
-              width: '260',
-              render: (value: any) => value || '-',
+              key: 'operator',
+              label: 'Source',
+              sortable: false,
+              render: (value: any, row: any) => row.operator?.name || 'Direct',
             },
             {
               key: 'status',
               label: 'Status',
-              width: '160',
               hozAlign: 'center',
               render: (value: any) => (
                 <StatusIndicator
@@ -110,26 +107,36 @@ export default function UsersPage() {
             {
               key: 'balance',
               label: 'Balance',
-              width: '140',
               hozAlign: 'right',
               sortable: true,
-              render: (value: any) => `₹${Number(value).toLocaleString()}`,
+              render: (value: any) => `₹${Number(value || 0).toLocaleString()}`,
             },
             {
               key: 'totalBets',
               label: 'Bets',
-              width: '120',
               hozAlign: 'right',
               sortable: true,
-              render: (value: any) => Number(value).toLocaleString(),
+              render: (value: any) => Number(value || 0).toLocaleString(),
+            },
+            {
+              key: 'totalWon',
+              label: 'Total Won',
+              hozAlign: 'right',
+              sortable: true,
+              render: (value: any) => `₹${Number(value || 0).toLocaleString()}`,
             },
             {
               key: 'isActive',
               label: 'Risk',
-              width: '120',
               hozAlign: 'center',
               render: (value: any) =>
                 value ? <Badge variant="default">Clear</Badge> : <Badge variant="danger">Inactive</Badge>,
+            },
+            {
+              key: 'createdAt',
+              label: 'Joined',
+              sortable: true,
+              render: (value: any) => new Date(value).toLocaleDateString(),
             },
           ]}
           data={users}

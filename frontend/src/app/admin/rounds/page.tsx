@@ -64,51 +64,77 @@ export default function RoundsPage() {
     }
   };
 
-  const columns = [
-    { key: 'roundNumber', label: 'Round', sortable: true, width: '100' },
+  const columns: any[] = [
+    { key: 'roundNumber', label: 'Round', sortable: true },
     {
       key: 'status',
       label: 'Status',
-      width: '150',
+      hozAlign: 'center',
       render: (value: any) => <Badge variant={getStatusColor(String(value))}>{String(value)}</Badge>,
+    },
+    {
+      key: 'openingType',
+      label: 'Type',
+      hozAlign: 'center',
+      render: (value: any) => (
+        <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-bold uppercase">
+          {value || 'QUAD'}
+        </span>
+      ),
     },
     {
       key: 'openingResult',
       label: 'Result',
-      width: '120',
-      render: (value: any) => (value && Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'),
+      hozAlign: 'center',
+      render: (value: any) => (value && Array.isArray(value) && value.length > 0 ? (
+        <div className="flex items-center justify-center gap-1">
+          {value.map((v, i) => (
+            <span key={i} className="w-6 h-6 flex items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-black text-xs">
+              {v}
+            </span>
+          ))}
+        </div>
+      ) : '-'),
     },
     {
       key: 'totalStake',
       label: 'Stake',
-      width: '130',
+      hozAlign: 'right',
       sortable: true,
       render: (value: any) => `₹${Number(value).toLocaleString()}`,
     },
     {
       key: 'totalPayout',
       label: 'Payout',
-      width: '130',
+      hozAlign: 'right',
       sortable: true,
       render: (value: any) => `₹${Number(value).toLocaleString()}`,
     },
     {
       key: 'houseProfit',
       label: 'House Profit',
-      width: '150',
+      hozAlign: 'right',
       sortable: true,
       render: (value: any) => (
-        <span className={Number(value) > 0 ? 'text-emerald-400 font-bold' : Number(value) < 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
+        <span className={Number(value) > 0 ? 'text-emerald-500 font-black' : Number(value) < 0 ? 'text-rose-500 font-black' : 'text-slate-400 font-bold'}>
           {Number(value) > 0 ? '+' : ''}₹{Number(value).toLocaleString()}
         </span>
       ),
     },
     {
       key: 'startedAt',
-      label: 'Started',
-      width: '180',
+      label: 'Timing',
       sortable: true,
-      render: (value: any) => new Date(value as string).toLocaleTimeString(),
+      render: (value: any, row: any) => {
+        const start = new Date(value as string);
+        const end = row.endedAt ? new Date(row.endedAt) : null;
+        return (
+          <div className="flex flex-col text-[10px] text-slate-500 font-mono">
+            <span>S: {start.toLocaleTimeString()}</span>
+            <span>E: {end ? end.toLocaleTimeString() : '-'}</span>
+          </div>
+        );
+      },
     },
   ];
 

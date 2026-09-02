@@ -78,7 +78,15 @@ export class UserService {
           totalDeposit: true,
           totalWithdraw: true,
           isActive: true,
-          createdAt: true
+          createdAt: true,
+          lastLoginAt: true,
+          operatorId: true,
+          operatorUserId: true,
+          operator: {
+            select: {
+              name: true
+            }
+          }
         }
       })
     ]);

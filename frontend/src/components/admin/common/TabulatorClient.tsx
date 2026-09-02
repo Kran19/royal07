@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ReactTabulator, reactFormatter } from 'react-tabulator';
 import 'react-tabulator/lib/styles.css';
 import 'tabulator-tables/dist/css/tabulator_midnight.min.css';
+import { cn } from "../../../lib/utils";
 
 interface Column<T> {
   key: keyof T | string;
@@ -36,7 +37,7 @@ function CellWrapper(props: any) {
   const value = props.cell.getValue();
   const def = props.cell.getColumn().getDefinition();
   const customRender = def.formatterParams?.customRender;
-  
+
   if (customRender) {
     return <>{customRender(value, rowData)}</>;
   }
@@ -45,14 +46,14 @@ function CellWrapper(props: any) {
 
 // SVG Icons as components
 const SearchIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg className={cn('h-4', 'w-4')} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8">
     <circle cx="8.5" cy="8.5" r="6" />
     <path d="M13 13l4.5 4.5" strokeLinecap="round" />
   </svg>
 );
 
 const DownloadIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className={cn('h-4', 'w-4')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
     <polyline points="7 10 12 15 17 10" />
     <line x1="12" y1="15" x2="12" y2="3" />
@@ -60,7 +61,7 @@ const DownloadIcon = () => (
 );
 
 const CsvIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className={cn('h-4', 'w-4')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
@@ -69,7 +70,7 @@ const CsvIcon = () => (
 );
 
 const ExcelIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className={cn('h-4', 'w-4')} viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <path d="M10 12l4 6M14 12l-4 6" />
@@ -77,7 +78,7 @@ const ExcelIcon = () => (
 );
 
 const PdfIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className={cn('h-4', 'w-4')} viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="9" y1="15" x2="15" y2="15" />
@@ -147,7 +148,7 @@ export default function TabulatorClient<T>({
     if (table && typeof table.getData === 'function') {
       try {
         return table.getData('active');
-      } catch (e) {}
+      } catch (e) { }
     }
     // Fallback to raw data if table instance is unresolvable
     return data || [];
@@ -159,20 +160,20 @@ export default function TabulatorClient<T>({
       const tableData = getExportData();
       const exportCols = columns.filter(c => !c.excludeFromExport && c.label !== 'Actions');
       const headers = exportCols.map(c => c.label);
-      
+
       const csvRows = tableData.map((row: any) =>
         exportCols.map(c => {
           let val = row[c.key as string];
           if (c.exportFormat) val = c.exportFormat(val, row);
           else if (val === null || val === undefined) val = '';
           else if (typeof val === 'object') val = val.mobile || val.name || JSON.stringify(val);
-          
+
           // Escape quotes and wrap in quotes if contains comma
           const strVal = String(val).replace(/"/g, '""');
           return `"${strVal}"`;
         }).join(',')
       );
-      
+
       const csvContent = [headers.join(','), ...csvRows].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -194,7 +195,7 @@ export default function TabulatorClient<T>({
       const tableData = getExportData();
       const exportCols = columns.filter(c => !c.excludeFromExport && c.label !== 'Actions');
       const headers = exportCols.map(c => c.label);
-      
+
       const rows = tableData.map((row: any) =>
         exportCols.map(c => {
           let val = row[c.key as string];
@@ -222,7 +223,7 @@ export default function TabulatorClient<T>({
       const tableData = getExportData();
       const exportCols = columns.filter(c => !c.excludeFromExport && c.label !== 'Actions');
       const headers = exportCols.map(c => c.label);
-      
+
       const rows = tableData.map((row: any) =>
         exportCols.map(c => {
           let val = row[c.key as string];
@@ -255,7 +256,7 @@ export default function TabulatorClient<T>({
 
   if (!isClient) {
     return (
-      <div className="h-64 flex items-center justify-center text-slate-500">
+      <div className={cn('h-64', 'flex', 'items-center', 'justify-center', 'text-slate-500')}>
         Loading table...
       </div>
     );
@@ -282,7 +283,7 @@ export default function TabulatorClient<T>({
     placeholder: "<div style='padding:2rem;color:#64748b;font-weight:500;text-align:center'>No records found</div>",
     paginationCounter: function (_pageSize: number, currentRow: number, _currentPage: number, totalRows: number) {
       if (totalRows === 0) return 'No records to display';
-      return `Showing ${currentRow} to ${Math.min(currentRow + _pageSize - 1, totalRows)} of ${totalRows} entries`;
+      return `Showing ${currentRow} to ${Math.min(currentRow + _pageSize - 1, totalRows)} of ${totalRows} entries `;
     },
   };
 
@@ -291,9 +292,9 @@ export default function TabulatorClient<T>({
       {/* Toolbar: Search + Export */}
       {(showSearch || showExport || customToolbar) && (
         <div className="tabulator-toolbar" style={{ justifyContent: customToolbar ? 'space-between' : 'flex-end' }}>
-          
+
           {customToolbar && (
-            <div className="flex-1 flex items-center justify-start">
+            <div className={cn('flex-1', 'flex', 'items-center', 'justify-start')}>
               {customToolbar}
             </div>
           )}
@@ -339,21 +340,21 @@ export default function TabulatorClient<T>({
                     <CsvIcon />
                     <div>
                       <p className="font-semibold">CSV</p>
-                      <p className="text-xs text-slate-500">Comma-separated values</p>
+                      <p className={cn('text-xs', 'text-slate-500')}>Comma-separated values</p>
                     </div>
                   </button>
                   <button type="button" onClick={handleExportExcel} className="tabulator-export-item">
                     <ExcelIcon />
                     <div>
-                      <p className="font-semibold text-emerald-400">Excel</p>
-                      <p className="text-xs text-slate-500">Microsoft Excel (.xlsx)</p>
+                      <p className={cn('font-semibold', 'text-emerald-400')}>Excel</p>
+                      <p className={cn('text-xs', 'text-slate-500')}>Microsoft Excel (.xlsx)</p>
                     </div>
                   </button>
                   <button type="button" onClick={handleExportPDF} className="tabulator-export-item">
                     <PdfIcon />
                     <div>
-                      <p className="font-semibold text-rose-400">PDF</p>
-                      <p className="text-xs text-slate-500">Portable Document Format</p>
+                      <p className={cn('font-semibold', 'text-rose-400')}>PDF</p>
+                      <p className={cn('text-xs', 'text-slate-500')}>Portable Document Format</p>
                     </div>
                   </button>
                 </div>
@@ -364,11 +365,11 @@ export default function TabulatorClient<T>({
       )}
 
       {/* Table */}
-      <div className="tabulator-table-area relative">
+      <div className={cn('tabulator-table-area', 'relative')}>
         {loading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm rounded-b-xl">
-            <div className="flex items-center gap-3 text-slate-400">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+          <div className={cn('absolute', 'inset-0', 'z-10', 'flex', 'items-center', 'justify-center', 'bg-slate-900/60', 'backdrop-blur-sm', 'rounded-b-xl')}>
+            <div className={cn('flex', 'items-center', 'gap-3', 'text-slate-400')}>
+              <svg className={cn('animate-spin', 'h-5', 'w-5')} viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
@@ -634,23 +635,42 @@ export default function TabulatorClient<T>({
           border-top: none !important;
           color: var(--tab-header-text) !important;
           padding: 24px 20px 16px !important;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
         }
         .tabulator-table-area .tabulator-footer-contents {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          width: 100% !important;
+          flex-wrap: wrap !important;
+          gap: 16px !important;
         }
+        
+        /* Counter on the left */
+        .tabulator-table-area .tabulator-page-counter {
+          color: var(--tab-header-text) !important;
+          font-size: 0.85rem !important;
+          font-weight: 500 !important;
+          margin: 0 !important;
+        }
+
+        /* Paginator on the right */
         .tabulator-table-area .tabulator-paginator {
           color: var(--tab-text) !important;
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: flex-end;
+          flex: 1;
           gap: 6px;
         }
+        
+        .tabulator-table-area .tabulator-paginator > label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--tab-header-text);
+          margin-left: 12px;
+          margin-right: 4px;
+        }
+
         .tabulator-table-area .tabulator-page {
           background: transparent !important;
           border: 1px solid transparent !important;
@@ -674,7 +694,7 @@ export default function TabulatorClient<T>({
           padding: 0 12px !important;
           background: transparent !important;
           color: var(--tab-header-text) !important;
-          font-weight: 400 !important;
+          font-weight: 500 !important;
         }
         
         .tabulator-table-area .tabulator-page.active {
@@ -699,24 +719,19 @@ export default function TabulatorClient<T>({
           border-radius: 9999px !important;
           padding: 4px 12px !important;
           font-size: 0.85rem !important;
-          margin: 0 24px 0 12px !important;
+          margin: 0 16px 0 0 !important;
           outline: none;
           cursor: pointer;
           -webkit-appearance: none;
           appearance: none;
           text-align: center;
+          font-weight: 600 !important;
         }
         .tabulator-table-area .tabulator-page-size:hover {
           background: var(--tab-btn-hover) !important;
         }
         .tabulator-table-area .tabulator-page-size:focus {
           border-color: #3b82f6 !important;
-        }
-        .tabulator-table-area .tabulator-pagination-counter {
-          color: var(--tab-header-text) !important;
-          font-size: 0.85rem !important;
-          font-weight: 500 !important;
-          margin-left: auto !important;
         }
       `}</style>
     </div>

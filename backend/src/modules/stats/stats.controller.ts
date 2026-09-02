@@ -10,6 +10,14 @@ export class StatsController {
     return this.statsService.getCurrentStats();
   }
 
+  @Get('high-bets')
+  async getHighBets(@Query('limit') limit?: string, @Query('minAmount') minAmount?: string) {
+    return this.statsService.getRecentHighBets(
+      limit ? parseInt(limit, 10) : 10,
+      minAmount ? parseFloat(minAmount) : 500
+    );
+  }
+
   @Get('historical')
   async getHistorical(
     @Query('from') from: string,

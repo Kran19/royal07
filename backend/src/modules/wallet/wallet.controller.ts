@@ -127,13 +127,29 @@ export class WalletController {
   @Post('admin/:id/:action')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseGuards(RolesGuard)
+  @UseInterceptors(FileInterceptor('proof', {
+    storage: diskStorage({
+      destination: './uploads/proofs',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        callback(null, `admin-proof-${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    }),
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+        return callback(new BadRequestException('Only image files are allowed!'), false);
+      }
+      callback(null, true);
+    }
+  }))
   async processTransaction(
     @Req() req: Request,
     @Param('id') id: string,
     @Param('action') action: 'approve' | 'reject',
-    @Body('adminNote') adminNote?: string
+    @Body('adminNote') adminNote?: string,
+    @UploadedFile() file?: Express.Multer.File
   ) {
     const adminId = (req.user as any).userId;
-    return this.walletService.processTransaction(adminId, id, action, adminNote);
+    return this.walletService.processTransaction(adminId, id, action, adminNote, file);
   }
 }

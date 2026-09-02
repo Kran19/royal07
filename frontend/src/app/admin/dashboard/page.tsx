@@ -12,6 +12,7 @@ import { OperatorHealthWidget } from '@/components/admin/dashboard/OperatorHealt
 import { GGRLeaderboardWidget } from '@/components/admin/dashboard/GGRLeaderboardWidget';
 import { SystemAlertsFeed } from '@/components/admin/dashboard/SystemAlertsFeed';
 import { SettlementWidget } from '@/components/admin/dashboard/SettlementWidget';
+import { RecentHighBetsWidget } from '@/components/admin/dashboard/RecentHighBetsWidget';
 import { apiService } from '@/lib/api/api-service';
 import { BetStats, GameRound } from '@/types';
 import { FloorHeatmap } from '@/components/admin/dashboard/FloorHeatmap';
@@ -119,6 +120,7 @@ export default function DashboardPage() {
   const kpiStats = {
     totalUsers: stats?.uniqueUsers || 0,
     activeUsers: stats?.uniqueUsers || 0,
+    totalOperators: stats?.totalOperators || 0,
     totalBetsToday: stats?.totalBets || 0,
     totalStakeToday: roundStake,
     totalPayoutToday: stats?.totalPayoutToday || 0, // Using locally updated stats
@@ -131,7 +133,7 @@ export default function DashboardPage() {
 
   return (
     <div className={cn('space-y-8', 'pb-12')}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={cn('flex', 'flex-col', 'md:flex-row', 'md:items-center', 'justify-between', 'gap-4')}>
         <div>
           <h1 className={cn('text-[32px]', 'font-black', 'text-slate-900', 'dark:text-white', 'tracking-normal')}>
             Hello Admin
@@ -141,49 +143,56 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">Currency Filter</label>
+        <div className={cn('flex', 'items-center', 'gap-3')}>
+          <label className={cn('text-sm', 'font-bold', 'text-slate-500', 'uppercase', 'tracking-widest')}>Currency Filter</label>
           <select 
             value={currency} 
             onChange={e => setCurrency(e.target.value)}
-            className="bg-white dark:bg-[#1d1f25] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-sm font-bold shadow-sm focus:ring-2 focus:ring-[#b8951a] outline-none transition-all"
+            className={cn('bg-white', 'dark:bg-[#1d1f25]', 'border', 'border-slate-200', 'dark:border-white/5', 'rounded-xl', 'px-4', 'py-2', 'text-sm', 'font-bold', 'shadow-sm', 'focus:ring-2', 'focus:ring-[#b8951a]', 'outline-none', 'transition-all')}
           >
             <option value="INR">INR</option>
             <option value="USDT">USDT</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-        <div className="xl:col-span-3">
-          <KPIWidget stats={kpiStats} loading={loading} currency={currency} />
+      {/* Top Level KPIs */}
+      <div className="w-full">
+        <KPIWidget stats={kpiStats} loading={loading} currency={currency} />
+      </div>
+
+      {/* Primary Row: Live activity & Profit */}
+      <div className={cn('grid', 'grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-4', 'gap-6')}>
+        <div className={cn('flex-1', 'min-h-[160px]')}>
+          <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
         </div>
-        <div className="col-span-1 flex flex-col gap-6">
-          <div className="flex-1 min-h-0">
-            <CurrentRoundWidget round={currentRound || undefined} loading={loading} liveStake={liveTotalStake} />
-          </div>
-          <div className="flex-1 min-h-0">
-            <SettlementWidget currency={currency} />
-          </div>
+        <div className={cn('flex-1', 'min-h-[160px]')}>
+          <SettlementWidget currency={currency} />
+        </div>
+        <div className={cn('flex-1', 'min-h-[160px]')}>
+          <OperatorProfitWidget />
+        </div>
+        <div className={cn('flex-1', 'min-h-[160px]')}>
+          <RecentHighBetsWidget />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+      {/* Secondary Row: Health, GGR, Alerts */}
+      <div className={cn('grid', 'grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-4', 'gap-6')}>
+        <div className={cn('xl:col-span-2', 'flex-1', 'min-h-[160px]')}>
           <OperatorHealthWidget />
         </div>
-        <div className="col-span-1">
+        <div className={cn('xl:col-span-1', 'flex-1', 'min-h-[160px]')}>
+          <GGRLeaderboardWidget currency={currency} />
+        </div>
+        <div className={cn('xl:col-span-1', 'flex-1', 'min-h-[160px]')}>
           <SystemAlertsFeed />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <GGRLeaderboardWidget currency={currency} />
-        <div className="space-y-6">
-          <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
-        </div>
+      {/* Bottom Row: Floor Heatmap */}
+      <div className="w-full">
+        <FloorHeatmap floorExposure={liveExposure} totalStake={liveTotalStake} />
       </div>
     </div>
   );
@@ -191,9 +200,9 @@ export default function DashboardPage() {
 
 function HealthMetric({ label, status }: { label: string; status: string }) {
   return (
-    <div className="flex items-center justify-between rounded-[20px] bg-[#f4f7fe] dark:bg-slate-800/50 p-5">
-      <span className="text-slate-600 dark:text-slate-400 font-bold">{label}</span>
-      <span className="text-emerald-600 dark:text-emerald-400 font-bold tracking-widest text-xs bg-emerald-100 dark:bg-emerald-500/10 px-4 py-1.5 rounded-full">
+    <div className={cn('flex', 'items-center', 'justify-between', 'rounded-[20px]', 'bg-[#f4f7fe]', 'dark:bg-slate-800/50', 'p-5')}>
+      <span className={cn('text-slate-600', 'dark:text-slate-400', 'font-bold')}>{label}</span>
+      <span className={cn('text-emerald-600', 'dark:text-emerald-400', 'font-bold', 'tracking-widest', 'text-xs', 'bg-emerald-100', 'dark:bg-emerald-500/10', 'px-4', 'py-1.5', 'rounded-full')}>
         {status}
       </span>
     </div>
