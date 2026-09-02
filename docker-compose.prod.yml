@@ -60,7 +60,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://royalbet:royalbet_pass@postgres:5432/royalbet?schema=public}
       REDIS_URL: redis://redis:6379
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-secret-key-royalbet!}
@@ -83,7 +82,6 @@ services:
       - .env.prod
     environment:
       POSTGRES_USER: royalbet
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-royalbet_pass}
       POSTGRES_DB: royalbet
     ports:
       - "5432:5432"
